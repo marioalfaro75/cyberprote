@@ -12,8 +12,9 @@ CSF is an open-source platform built on top of a custom [OpenTelemetry Collector
 - **Toxic-combination detection** — Cypher queries identify dangerous cross-finding patterns
 - **Policy engine** — OPA/Rego policies for automated evaluation of security posture
 - **Composite risk scoring** — Weighted 0-100 score combining CVSS, EPSS, KEV, blast radius, and policy results
-- **REST API** — Query findings, risk scores, and policy evaluations
-- **Dashboard** — React + TypeScript + Vite + Tailwind CSS UI
+- **Threat intelligence** — MITRE ATT&CK matrix mapping, Shodan exposure lookup, NVD/CVE enrichment
+- **REST API** — Query findings, risk scores, policy evaluations, and threat intel
+- **Dashboard** — React + TypeScript + Vite + Tailwind CSS UI with light/dark/system theme
 
 ## Architecture
 
@@ -44,7 +45,7 @@ CSF is an open-source platform built on top of a custom [OpenTelemetry Collector
                                               ┌──────────▼───────────┐
                                               │     REST API         │
                                               │  Findings · Scores   │
-                                              │  Policy evaluation   │
+                                              │  Policy · Threat Intel│
                                               └──────────┬───────────┘
                                                          │
                                               ┌──────────▼───────────┐
@@ -119,7 +120,7 @@ curl http://localhost:8080/api/v1/health
 cd dashboard && npm ci && npm run dev
 ```
 
-The dashboard runs on `http://localhost:5173`.
+The dashboard runs on `http://localhost:3001`.
 
 #### 5. Seed sample data
 
@@ -196,10 +197,16 @@ exporter/
 internal/
   ocsf/               OCSF Go types (classes 2001-2006) with validation
   graph/               AGE graph service, schema, Cypher queries
+  threatintel/         MITRE ATT&CK, Shodan, NVD integration
+  compliance/          Compliance framework catalog (NIST CSF, CIS)
+  settings/            Persistent settings store
 api/                   API route handlers and middleware
 policy/                OPA/Rego policies
 scoring/               Composite risk scoring engine
 dashboard/             React + TypeScript + Vite + Tailwind CSS
+  src/context/         Theme context (dark mode)
+  src/components/      Layout, settings forms, shared components
+  src/pages/           Page views (Risk, Compliance, Threat Intel, etc.)
 helm/csf/              Helm chart for Kubernetes deployment
 scripts/               Seed scripts and utilities
 ```

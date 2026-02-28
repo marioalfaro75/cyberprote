@@ -3,6 +3,7 @@ import { ReactNode } from 'react'
 
 const navItems = [
   { path: '/', label: 'Risk Overview' },
+  { path: '/compliance', label: 'Compliance' },
   { path: '/toxic-combinations', label: 'Toxic Combinations' },
   { path: '/findings', label: 'Findings' },
   { path: '/connectors', label: 'Connectors' },

@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cloud-security-fabric/csf/internal/compliance"
 	"github.com/cloud-security-fabric/csf/internal/graph"
 	"github.com/cloud-security-fabric/csf/internal/settings"
 	"github.com/cloud-security-fabric/csf/policy"
@@ -21,16 +22,18 @@ type Server struct {
 	policyEngine  *policy.Engine
 	scoringEngine *scoring.Engine
 	settingsStore *settings.FileStore
+	catalog       *compliance.Catalog
 	httpServer    *http.Server
 }
 
 // NewServer creates a new API server.
-func NewServer(gs *graph.GraphService, pe *policy.Engine, se *scoring.Engine, ss *settings.FileStore) *Server {
+func NewServer(gs *graph.GraphService, pe *policy.Engine, se *scoring.Engine, ss *settings.FileStore, cat *compliance.Catalog) *Server {
 	s := &Server{
 		graphService:  gs,
 		policyEngine:  pe,
 		scoringEngine: se,
 		settingsStore: ss,
+		catalog:       cat,
 	}
 	return s
 }
@@ -68,6 +71,12 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/policies/evaluate", s.handleEvaluatePolicy)
 	mux.HandleFunc("GET /api/v1/policies", s.handleListPolicies)
 	mux.HandleFunc("GET /api/v1/graph/stats", s.handleGraphStats)
+
+	// Compliance posture
+	mux.HandleFunc("GET /api/v1/compliance/frameworks", s.handleListFrameworks)
+	mux.HandleFunc("GET /api/v1/compliance/frameworks/{id}/posture", s.handleFrameworkPosture)
+	mux.HandleFunc("GET /api/v1/compliance/frameworks/{id}/controls/{controlId}/findings", s.handleControlFindings)
+	mux.HandleFunc("GET /api/v1/compliance/summary", s.handleComplianceSummary)
 
 	// Settings / connector configuration
 	mux.HandleFunc("GET /api/v1/settings/connectors", s.handleGetConnectors)

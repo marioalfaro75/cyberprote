@@ -1,4 +1,5 @@
 import type { ProviderSettings, SaveResult, TestConnectionResult, ApplyResult } from './settings-types'
+import type { FrameworkInfo, FrameworkPosture, FrameworkSummary, ControlPosture, FindingRef } from './compliance-types'
 
 const BASE_URL = '/api/v1'
 
@@ -25,6 +26,15 @@ export const api = {
     body: JSON.stringify(finding),
   }),
   getGraphStats: () => fetchJSON<Record<string, number>>('/graph/stats'),
+
+  // Compliance posture
+  getComplianceFrameworks: () => fetchJSON<{ frameworks: FrameworkInfo[]; count: number }>('/compliance/frameworks'),
+  getFrameworkPosture: (id: string) => fetchJSON<FrameworkPosture>(`/compliance/frameworks/${id}/posture`),
+  getControlFindings: (frameworkId: string, controlId: string) =>
+    fetchJSON<{ control: ControlPosture; findings: FindingRef[]; count: number }>(
+      `/compliance/frameworks/${frameworkId}/controls/${controlId}/findings`,
+    ),
+  getComplianceSummary: () => fetchJSON<{ summaries: FrameworkSummary[]; count: number }>('/compliance/summary'),
 
   // Settings / connector configuration
   getConnectorSettings: () => fetchJSON<ProviderSettings>('/settings/connectors'),

@@ -1,0 +1,159 @@
+id: nist-csf-2.0
+name: NIST Cybersecurity Framework
+version: "2.0"
+functions:
+  - id: GV
+    name: Govern
+    categories:
+      - id: GV.OC
+        name: Organizational Context
+        controls:
+          - id: GV.OC-01
+            name: Organizational mission is understood and informs cybersecurity risk management
+      - id: GV.RM
+        name: Risk Management Strategy
+        controls:
+          - id: GV.RM-01
+            name: Risk management objectives are established and agreed upon
+          - id: GV.RM-02
+            name: Risk appetite and risk tolerance are established
+      - id: GV.SC
+        name: Supply Chain Risk Management
+        controls:
+          - id: GV.SC-01
+            name: Cybersecurity supply chain risk management program is established
+  - id: ID
+    name: Identify
+    categories:
+      - id: ID.AM
+        name: Asset Management
+        controls:
+          - id: ID.AM-01
+            name: Inventories of hardware managed by the organization are maintained
+            aws_controls: ["Config.1"]
+          - id: ID.AM-02
+            name: Inventories of software and services managed by the organization are maintained
+            aws_controls: ["SSM.1", "SSM.2"]
+      - id: ID.RA
+        name: Risk Assessment
+        controls:
+          - id: ID.RA-01
+            name: Vulnerabilities in assets are identified, validated, and recorded
+            aws_controls: ["Inspector.1", "ECR.1"]
+          - id: ID.RA-02
+            name: Cyber threat intelligence is received from information sharing forums
+          - id: ID.RA-05
+            name: Threats, vulnerabilities, likelihoods, and impacts are used to understand inherent risk
+  - id: PR
+    name: Protect
+    categories:
+      - id: PR.AA
+        name: Identity Management, Authentication, and Access Control
+        controls:
+          - id: PR.AA-01
+            name: Identities and credentials for authorized users and services are managed
+            aws_controls: ["IAM.1", "IAM.2", "IAM.4", "IAM.6"]
+          - id: PR.AA-02
+            name: Identities are proofed and bound to credentials based on context
+            aws_controls: ["IAM.5", "IAM.8"]
+          - id: PR.AA-03
+            name: Users, services, and hardware are authenticated
+            aws_controls: ["IAM.3", "IAM.7"]
+          - id: PR.AA-05
+            name: Access permissions, entitlements, and authorizations are managed
+            aws_controls: ["IAM.9", "IAM.10", "IAM.11"]
+      - id: PR.DS
+        name: Data Security
+        controls:
+          - id: PR.DS-01
+            name: Data-at-rest is protected
+            aws_controls: ["S3.4", "S3.5", "RDS.3", "EBS.1", "EFS.1"]
+          - id: PR.DS-02
+            name: Data-in-transit is protected
+            aws_controls: ["ELB.1", "S3.10", "ES.8"]
+          - id: PR.DS-10
+            name: Confidentiality, integrity, and availability of data-in-use are protected
+            aws_controls: ["KMS.1", "KMS.3"]
+      - id: PR.PS
+        name: Platform Security
+        controls:
+          - id: PR.PS-01
+            name: Configuration management practices are established and applied
+            aws_controls: ["EC2.1", "EC2.2", "EC2.8", "RDS.1"]
+          - id: PR.PS-02
+            name: Software is maintained, replaced, and removed with responses to identified risks
+            aws_controls: ["SSM.3", "Lambda.2"]
+      - id: PR.IR
+        name: Technology Infrastructure Resilience
+        controls:
+          - id: PR.IR-01
+            name: Networks and environments are protected from unauthorized access
+            aws_controls: ["VPC.1", "EC2.19", "EC2.18"]
+          - id: PR.IR-02
+            name: Technology assets are protected from environmental threats
+            aws_controls: ["RDS.5", "RDS.6", "S3.11"]
+  - id: DE
+    name: Detect
+    categories:
+      - id: DE.CM
+        name: Continuous Monitoring
+        controls:
+          - id: DE.CM-01
+            name: Networks and network services are monitored
+            aws_controls: ["GuardDuty.1", "VPC.2"]
+          - id: DE.CM-02
+            name: Physical environment is monitored
+          - id: DE.CM-03
+            name: Personnel activity and technology usage are monitored
+            aws_controls: ["CloudTrail.1", "CloudTrail.2"]
+          - id: DE.CM-06
+            name: External service provider activities are monitored
+            aws_controls: ["CloudWatch.1"]
+      - id: DE.AE
+        name: Adverse Event Analysis
+        controls:
+          - id: DE.AE-02
+            name: Potentially adverse events are analyzed to better understand associated activities
+            aws_controls: ["SecurityHub.1"]
+          - id: DE.AE-03
+            name: Information is correlated from multiple sources
+  - id: RS
+    name: Respond
+    categories:
+      - id: RS.MA
+        name: Incident Management
+        controls:
+          - id: RS.MA-01
+            name: Incident response plan is executed
+          - id: RS.MA-02
+            name: Incident reports are triaged and validated
+      - id: RS.AN
+        name: Incident Analysis
+        controls:
+          - id: RS.AN-03
+            name: Analysis is performed to establish what took place
+          - id: RS.AN-06
+            name: Actions performed during an investigation are recorded
+      - id: RS.MI
+        name: Incident Mitigation
+        controls:
+          - id: RS.MI-01
+            name: Incidents are contained
+          - id: RS.MI-02
+            name: Incidents are eradicated
+  - id: RC
+    name: Recover
+    categories:
+      - id: RC.RP
+        name: Incident Recovery Plan Execution
+        controls:
+          - id: RC.RP-01
+            name: Recovery portion of the incident response plan is executed
+          - id: RC.RP-03
+            name: Integrity of backups and other restoration assets is verified before using them for restoration
+            aws_controls: ["RDS.2", "DynamoDB.2"]
+      - id: RC.CO
+        name: Incident Recovery Communication
+        controls:
+          - id: RC.CO-03
+            name: Recovery activities and progress are communicated to stakeholders

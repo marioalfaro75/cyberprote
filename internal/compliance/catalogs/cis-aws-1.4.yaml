@@ -1,0 +1,144 @@
+id: cis-aws-1.4
+name: CIS AWS Foundations Benchmark
+version: "1.4.0"
+functions:
+  - id: "1"
+    name: Identity and Access Management
+    categories:
+      - id: "1.1"
+        name: Account Security
+        controls:
+          - id: "1.1"
+            name: Maintain current contact details
+          - id: "1.2"
+            name: Ensure security contact information is registered
+          - id: "1.3"
+            name: Ensure security questions are registered in the AWS account
+          - id: "1.4"
+            name: Ensure no root user account access key exists
+            aws_controls: ["IAM.4"]
+      - id: "1.2"
+        name: Password and MFA
+        controls:
+          - id: "1.5"
+            name: Ensure MFA is enabled for the root user account
+            aws_controls: ["IAM.6"]
+          - id: "1.6"
+            name: Ensure hardware MFA is enabled for the root user account
+            aws_controls: ["IAM.6"]
+          - id: "1.7"
+            name: Eliminate use of the root user for administrative and daily tasks
+            aws_controls: ["IAM.4"]
+          - id: "1.8"
+            name: Ensure IAM password policy requires minimum length of 14 or greater
+            aws_controls: ["IAM.8"]
+          - id: "1.9"
+            name: Ensure IAM password policy prevents password reuse
+            aws_controls: ["IAM.8"]
+          - id: "1.10"
+            name: Ensure multi-factor authentication (MFA) is enabled for all IAM users that have a console password
+            aws_controls: ["IAM.5"]
+      - id: "1.3"
+        name: Key Management
+        controls:
+          - id: "1.12"
+            name: Ensure credentials unused for 45 days or greater are disabled
+            aws_controls: ["IAM.1", "IAM.2"]
+          - id: "1.13"
+            name: Ensure there is only one active access key available for any single IAM user
+            aws_controls: ["IAM.3"]
+          - id: "1.14"
+            name: Ensure access keys are rotated every 90 days or less
+            aws_controls: ["IAM.3"]
+  - id: "2"
+    name: Storage
+    categories:
+      - id: "2.1"
+        name: Simple Storage Service (S3)
+        controls:
+          - id: "2.1.1"
+            name: Ensure S3 Bucket Policy is set to deny HTTP requests
+            aws_controls: ["S3.10"]
+          - id: "2.1.2"
+            name: Ensure MFA Delete is enabled on S3 buckets
+            aws_controls: ["S3.5"]
+          - id: "2.1.5"
+            name: Ensure that S3 Buckets are configured with Block Public Access
+            aws_controls: ["S3.1", "S3.2", "S3.3"]
+      - id: "2.2"
+        name: Elastic Compute Cloud (EC2)
+        controls:
+          - id: "2.2.1"
+            name: Ensure EBS volume encryption is enabled
+            aws_controls: ["EBS.1"]
+      - id: "2.3"
+        name: Relational Database Service (RDS)
+        controls:
+          - id: "2.3.1"
+            name: Ensure that encryption is enabled for RDS Instances
+            aws_controls: ["RDS.3"]
+          - id: "2.3.2"
+            name: Ensure Auto Minor Version Upgrade feature is enabled for RDS instances
+            aws_controls: ["RDS.1"]
+          - id: "2.3.3"
+            name: Ensure that public access is not given to RDS Instance
+            aws_controls: ["RDS.2"]
+  - id: "3"
+    name: Logging
+    categories:
+      - id: "3.1"
+        name: CloudTrail
+        controls:
+          - id: "3.1"
+            name: Ensure CloudTrail is enabled in all regions
+            aws_controls: ["CloudTrail.1"]
+          - id: "3.2"
+            name: Ensure CloudTrail log file validation is enabled
+            aws_controls: ["CloudTrail.2"]
+          - id: "3.4"
+            name: Ensure CloudTrail trails are integrated with CloudWatch Logs
+            aws_controls: ["CloudTrail.4"]
+      - id: "3.2"
+        name: Other Logging
+        controls:
+          - id: "3.7"
+            name: Ensure VPC flow logging is enabled in all VPCs
+            aws_controls: ["VPC.2"]
+          - id: "3.10"
+            name: Ensure that Object-level logging for write events is enabled for S3 bucket
+            aws_controls: ["S3.11"]
+          - id: "3.11"
+            name: Ensure that Object-level logging for read events is enabled for S3 bucket
+            aws_controls: ["S3.11"]
+  - id: "4"
+    name: Monitoring
+    categories:
+      - id: "4.1"
+        name: Metric Filters and Alarms
+        controls:
+          - id: "4.1"
+            name: Ensure a log metric filter and alarm exist for unauthorized API calls
+            aws_controls: ["CloudWatch.1"]
+          - id: "4.3"
+            name: Ensure a log metric filter and alarm exist for usage of root account
+            aws_controls: ["CloudWatch.1"]
+          - id: "4.4"
+            name: Ensure a log metric filter and alarm exist for IAM policy changes
+            aws_controls: ["CloudWatch.1"]
+  - id: "5"
+    name: Networking
+    categories:
+      - id: "5.1"
+        name: VPC Security
+        controls:
+          - id: "5.1"
+            name: Ensure no Network ACLs allow ingress from 0.0.0.0/0 to remote server administration ports
+            aws_controls: ["EC2.18", "EC2.19"]
+          - id: "5.2"
+            name: Ensure no security groups allow ingress from 0.0.0.0/0 to remote server administration ports
+            aws_controls: ["EC2.1", "EC2.2"]
+          - id: "5.3"
+            name: Ensure the default security group of every VPC restricts all traffic
+            aws_controls: ["VPC.1"]
+          - id: "5.4"
+            name: Ensure routing tables for VPC peering are least access

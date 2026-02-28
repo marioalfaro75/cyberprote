@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/cloud-security-fabric/csf/api"
+	"github.com/cloud-security-fabric/csf/internal/compliance"
 	"github.com/cloud-security-fabric/csf/internal/graph"
 	"github.com/cloud-security-fabric/csf/internal/settings"
 	"github.com/cloud-security-fabric/csf/policy"
@@ -38,9 +39,15 @@ func main() {
 
 	se := scoring.NewDefaultEngine()
 
+	cat, err := compliance.LoadCatalog()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "compliance catalog: %v\n", err)
+		os.Exit(1)
+	}
+
 	settingsStore := settings.NewFileStore("./csf-settings.json", "./.csf-secrets.env")
 
-	server := api.NewServer(gs, pe, se, settingsStore)
+	server := api.NewServer(gs, pe, se, settingsStore, cat)
 	fmt.Printf("CSF API server starting on %s\n", addr)
 	if err := server.Start(addr); err != nil {
 		fmt.Fprintf(os.Stderr, "server: %v\n", err)

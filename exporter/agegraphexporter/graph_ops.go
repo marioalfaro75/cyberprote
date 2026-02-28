@@ -3,6 +3,7 @@ package agegraphexporter
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	"github.com/cloud-security-fabric/csf/internal/graph"
 	"github.com/cloud-security-fabric/csf/internal/ocsf"
@@ -133,7 +134,16 @@ func processComplianceFinding(ctx context.Context, gs *graph.GraphService, f *oc
 		provider = f.Cloud.Provider
 	}
 
-	if err := gs.UpsertFinding(ctx, findingUID, f.ClassUID, f.SeverityID, title, f.Message, provider, f.Status); err != nil {
+	var extra *graph.FindingExtra
+	if f.Compliance != nil {
+		extra = &graph.FindingExtra{
+			ComplianceStatus:    f.Compliance.Status,
+			ComplianceControl:   f.Compliance.Control,
+			ComplianceStandards: strings.Join(f.Compliance.Standards, ","),
+		}
+	}
+
+	if err := gs.UpsertFindingWithExtra(ctx, findingUID, f.ClassUID, f.SeverityID, title, f.Message, provider, f.Status, extra); err != nil {
 		return err
 	}
 

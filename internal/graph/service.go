@@ -142,8 +142,20 @@ func (gs *GraphService) UpsertResource(ctx context.Context, uid, resourceType, n
 	return gs.execCypher(ctx, query)
 }
 
+// FindingExtra holds optional additional properties for a Finding node.
+type FindingExtra struct {
+	ComplianceStatus   string
+	ComplianceControl  string
+	ComplianceStandards string // comma-separated
+}
+
 // UpsertFinding creates or updates a Finding node.
 func (gs *GraphService) UpsertFinding(ctx context.Context, uid string, classUID int32, severityID int32, title, message, provider, status string) error {
+	return gs.UpsertFindingWithExtra(ctx, uid, classUID, severityID, title, message, provider, status, nil)
+}
+
+// UpsertFindingWithExtra creates or updates a Finding node with optional extra properties.
+func (gs *GraphService) UpsertFindingWithExtra(ctx context.Context, uid string, classUID int32, severityID int32, title, message, provider, status string, extra *FindingExtra) error {
 	props := map[string]interface{}{
 		"uid":         uid,
 		"class_uid":   classUID,
@@ -153,6 +165,17 @@ func (gs *GraphService) UpsertFinding(ctx context.Context, uid string, classUID 
 		"provider":    provider,
 		"status":      status,
 		"updated_at":  time.Now().Unix(),
+	}
+	if extra != nil {
+		if extra.ComplianceStatus != "" {
+			props["compliance_status"] = extra.ComplianceStatus
+		}
+		if extra.ComplianceControl != "" {
+			props["compliance_control"] = extra.ComplianceControl
+		}
+		if extra.ComplianceStandards != "" {
+			props["compliance_standards"] = extra.ComplianceStandards
+		}
 	}
 	query := fmt.Sprintf(
 		`MERGE (f:Finding {uid: '%s'}) SET f = %s`,
@@ -285,6 +308,67 @@ func (gs *GraphService) QueryToxicCombinations(ctx context.Context, queryName st
 		} else {
 			results = append(results, m)
 		}
+	}
+	return results, rows.Err()
+}
+
+// ComplianceFindingRow represents a compliance finding returned from a graph query.
+type ComplianceFindingRow struct {
+	UID               string `json:"uid"`
+	Title             string `json:"title"`
+	SeverityID        int32  `json:"severity_id"`
+	Status            string `json:"status"`
+	Provider          string `json:"provider"`
+	ComplianceStatus  string `json:"compliance_status"`
+	ComplianceControl string `json:"compliance_control"`
+	ComplianceStandards string `json:"compliance_standards"`
+}
+
+// QueryComplianceFindings returns all findings that have compliance metadata.
+func (gs *GraphService) QueryComplianceFindings(ctx context.Context) ([]ComplianceFindingRow, error) {
+	query := `MATCH (f:Finding) WHERE f.compliance_control IS NOT NULL RETURN f`
+	rows, err := gs.queryCypher(ctx, query, "f agtype")
+	if err != nil {
+		return nil, fmt.Errorf("query compliance findings: %w", err)
+	}
+	defer rows.Close()
+
+	var results []ComplianceFindingRow
+	for rows.Next() {
+		var raw string
+		if err := rows.Scan(&raw); err != nil {
+			return nil, err
+		}
+		var m map[string]interface{}
+		if err := json.Unmarshal([]byte(raw), &m); err != nil {
+			continue
+		}
+		row := ComplianceFindingRow{}
+		if v, ok := m["uid"].(string); ok {
+			row.UID = v
+		}
+		if v, ok := m["title"].(string); ok {
+			row.Title = v
+		}
+		if v, ok := m["severity_id"].(float64); ok {
+			row.SeverityID = int32(v)
+		}
+		if v, ok := m["status"].(string); ok {
+			row.Status = v
+		}
+		if v, ok := m["provider"].(string); ok {
+			row.Provider = v
+		}
+		if v, ok := m["compliance_status"].(string); ok {
+			row.ComplianceStatus = v
+		}
+		if v, ok := m["compliance_control"].(string); ok {
+			row.ComplianceControl = v
+		}
+		if v, ok := m["compliance_standards"].(string); ok {
+			row.ComplianceStandards = v
+		}
+		results = append(results, row)
 	}
 	return results, rows.Err()
 }

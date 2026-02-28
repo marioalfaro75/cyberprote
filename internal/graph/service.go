@@ -339,38 +339,61 @@ func (gs *GraphService) QueryComplianceFindings(ctx context.Context) ([]Complian
 		if err := rows.Scan(&raw); err != nil {
 			return nil, err
 		}
-		var m map[string]interface{}
-		if err := json.Unmarshal([]byte(raw), &m); err != nil {
+		props := extractVertexProperties(raw)
+		if props == nil {
 			continue
 		}
 		row := ComplianceFindingRow{}
-		if v, ok := m["uid"].(string); ok {
+		if v, ok := props["uid"].(string); ok {
 			row.UID = v
 		}
-		if v, ok := m["title"].(string); ok {
+		if v, ok := props["title"].(string); ok {
 			row.Title = v
 		}
-		if v, ok := m["severity_id"].(float64); ok {
+		if v, ok := props["severity_id"].(float64); ok {
 			row.SeverityID = int32(v)
 		}
-		if v, ok := m["status"].(string); ok {
+		if v, ok := props["status"].(string); ok {
 			row.Status = v
 		}
-		if v, ok := m["provider"].(string); ok {
+		if v, ok := props["provider"].(string); ok {
 			row.Provider = v
 		}
-		if v, ok := m["compliance_status"].(string); ok {
+		if v, ok := props["compliance_status"].(string); ok {
 			row.ComplianceStatus = v
 		}
-		if v, ok := m["compliance_control"].(string); ok {
+		if v, ok := props["compliance_control"].(string); ok {
 			row.ComplianceControl = v
 		}
-		if v, ok := m["compliance_standards"].(string); ok {
+		if v, ok := props["compliance_standards"].(string); ok {
 			row.ComplianceStandards = v
 		}
 		results = append(results, row)
 	}
 	return results, rows.Err()
+}
+
+// extractVertexProperties parses an AGE vertex string (e.g., `{...}::vertex`)
+// and returns the properties map. Falls back to top-level keys if no properties field.
+func extractVertexProperties(raw string) map[string]interface{} {
+	// Strip AGE type suffix like ::vertex or ::edge
+	cleaned := raw
+	for _, suffix := range []string{"::vertex", "::edge"} {
+		if strings.HasSuffix(cleaned, suffix) {
+			cleaned = strings.TrimSuffix(cleaned, suffix)
+			break
+		}
+	}
+	var m map[string]interface{}
+	if err := json.Unmarshal([]byte(cleaned), &m); err != nil {
+		return nil
+	}
+	// AGE vertices have {id, label, properties} — extract properties
+	if props, ok := m["properties"].(map[string]interface{}); ok {
+		return props
+	}
+	// Fallback: treat as flat map
+	return m
 }
 
 // CountNodes returns the total number of nodes with a given label.

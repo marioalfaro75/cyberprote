@@ -61,13 +61,15 @@ The project is a custom OpenTelemetry Collector with security-specific component
 
 - **Graph layer** (`internal/graph/`) — AGE graph service, schema, toxic combination Cypher queries
 
-- **API server** (`cmd/api/`, `api/`) — REST API serving findings, risk scores, policy evaluation
+- **API server** (`cmd/api/`, `api/`) — REST API serving findings, risk scores, policy evaluation, threat intel
+
+- **Threat intelligence** (`internal/threatintel/`) — MITRE ATT&CK matrix, Shodan exposure, NVD/CVE lookup
 
 - **Policy engine** (`policy/`) — OPA-based Rego policy evaluation with embedded policies
 
 - **Scoring** (`scoring/`) — Composite risk score (0-100) with configurable weights
 
-- **Dashboard** (`dashboard/`) — React 18 + TypeScript + Vite + Tailwind CSS
+- **Dashboard** (`dashboard/`) — React 18 + TypeScript + Vite + Tailwind CSS with dark mode (light/dark/system)
 
 ## Key Conventions
 
@@ -78,3 +80,11 @@ The project is a custom OpenTelemetry Collector with security-specific component
 - Graph queries use Apache AGE Cypher syntax (not Neo4j)
 - OPA policies use `package csf.<policy_name>` namespace with `result := {"decision": "...", "reason": reason}` pattern
 - The collector entry point (`cmd/collector/main.go`) wires all components; `Factories` must be a function, not a value
+
+## Dashboard
+
+- Dark mode uses `darkMode: 'class'` in `tailwind.config.js` (NOT `'selector'` — the `:where()` zero-specificity selectors don't work with Vite dev server)
+- Theme state managed by `ThemeContext` (`src/context/ThemeContext.tsx`) — cycles light → dark → system, persists to `localStorage` key `csf-theme`
+- FOUC prevention: inline `<script>` in `index.html` applies `.dark` class before first paint
+- Dev server runs on port 3001 with API proxy to port 8080
+- Settings page uses per-provider form components in `src/components/settings/`

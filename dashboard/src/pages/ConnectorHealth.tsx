@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../api/client'
+import type { ProviderSettings } from '../api/settings-types'
 
 const PIPELINE_ENDPOINTS = [
   { name: 'OTLP gRPC', address: 'localhost:4317', description: 'OpenTelemetry gRPC receiver' },
@@ -8,21 +10,31 @@ const PIPELINE_ENDPOINTS = [
   { name: 'Metrics', address: 'localhost:8888', description: 'Collector internal metrics' },
 ]
 
-const RECEIVERS = [
-  { name: 'AWS Security Hub', key: 'awssechubreceiver', status: 'configured' },
-  { name: 'GitHub GHAS', key: 'githubghasreceiver', status: 'configured' },
-  { name: 'GCP SCC', key: 'gcpsccreceiver', status: 'stub' },
-  { name: 'Azure Defender', key: 'azuredefenderreceiver', status: 'stub' },
+const RECEIVER_META = [
+  { name: 'AWS Security Hub', key: 'awssechubreceiver', settingsKey: 'aws' as const },
+  { name: 'GitHub GHAS', key: 'githubghasreceiver', settingsKey: 'github' as const },
+  { name: 'GCP SCC', key: 'gcpsccreceiver', settingsKey: 'gcp' as const },
+  { name: 'Azure Defender', key: 'azuredefenderreceiver', settingsKey: 'azure' as const },
 ]
+
+function receiverStatus(settings: ProviderSettings | null, key: 'aws' | 'github' | 'gcp' | 'azure') {
+  if (!settings) return { label: 'loading', style: 'bg-gray-100 text-gray-600' }
+  if (settings[key].enabled) return { label: 'enabled', style: 'bg-green-100 text-green-800' }
+  return { label: 'disabled', style: 'bg-gray-100 text-gray-600' }
+}
 
 export default function ConnectorHealth() {
   const [status, setStatus] = useState<{ collector: string } | null>(null)
+  const [settings, setSettings] = useState<ProviderSettings | null>(null)
   const [lastChecked, setLastChecked] = useState<Date | null>(null)
 
   useEffect(() => {
     api.getConnectorStatus()
       .then((s) => { setStatus(s); setLastChecked(new Date()) })
       .catch(() => { setStatus({ collector: 'unreachable' }); setLastChecked(new Date()) })
+    api.getConnectorSettings()
+      .then(setSettings)
+      .catch(() => {})
   }, [])
 
   const isHealthy = status?.collector === 'healthy'
@@ -66,7 +78,12 @@ export default function ConnectorHealth() {
       </div>
 
       {/* Receiver status */}
-      <h3 className="text-lg font-semibold mb-3">Receivers</h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold">Receivers</h3>
+        <Link to="/settings" className="text-sm text-blue-600 hover:text-blue-800">
+          Configure in Settings
+        </Link>
+      </div>
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -77,19 +94,20 @@ export default function ConnectorHealth() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {RECEIVERS.map((r) => (
-              <tr key={r.key}>
-                <td className="px-4 py-3 text-sm font-medium">{r.name}</td>
-                <td className="px-4 py-3 text-sm font-mono text-gray-500">{r.key}</td>
-                <td className="px-4 py-3">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    r.status === 'configured' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {r.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
+            {RECEIVER_META.map((r) => {
+              const st = receiverStatus(settings, r.settingsKey)
+              return (
+                <tr key={r.key}>
+                  <td className="px-4 py-3 text-sm font-medium">{r.name}</td>
+                  <td className="px-4 py-3 text-sm font-mono text-gray-500">{r.key}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${st.style}`}>
+                      {st.label}
+                    </span>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

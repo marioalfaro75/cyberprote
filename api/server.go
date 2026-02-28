@@ -130,7 +130,7 @@ func (s *Server) handleToxicCombination(w http.ResponseWriter, r *http.Request) 
 
 func (s *Server) handleConnectorStatus(w http.ResponseWriter, r *http.Request) {
 	// Proxy to the collector's health check
-	resp, err := http.Get("http://localhost:13133")
+	resp, err := http.Get("http://localhost:55679/debug/servicez")
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]interface{}{
 			"collector": "unreachable",

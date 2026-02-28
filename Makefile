@@ -1,4 +1,4 @@
-.PHONY: build test lint run-collector docker-up docker-down clean generate
+.PHONY: build test lint run-collector docker-up docker-down clean generate start stop
 
 GO ?= go
 BINARY_NAME := csf-collector
@@ -49,3 +49,11 @@ vet:
 # Run seed script
 seed:
 	$(GO) run ./scripts/seed-graph/
+
+# Start all services (database, collector, API) and seed sample data
+start:
+	./scripts/start.sh
+
+# Stop all running services
+stop:
+	./scripts/start.sh --stop

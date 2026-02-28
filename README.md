@@ -55,42 +55,126 @@ CSF is an open-source platform built on top of a custom [OpenTelemetry Collector
 
 ## Quick Start
 
+You can start the full stack manually step-by-step, or use the `scripts/start.sh` helper to bring everything up at once.
+
 ### Prerequisites
 
 - Go 1.25+
 - Docker & Docker Compose
 - Node.js 18+ (for dashboard)
 
-### 1. Start infrastructure
+### Option A: One command
 
 ```bash
-docker compose up -d          # PostgreSQL + Apache AGE
+./scripts/start.sh            # starts all services, seeds sample data
+./scripts/start.sh --no-seed  # skip seeding
+./scripts/start.sh --stop     # tear everything down
 ```
 
-### 2. Build and run the collector
+### Option B: Step by step
+
+#### 1. Start the database
 
 ```bash
-make build                    # builds build/csf-collector
-./build/csf-collector --config collector-config.yaml
+docker compose up -d
 ```
 
-### 3. Build and run the API server
+PostgreSQL with Apache AGE starts on port 5432. Graph schema migrations run automatically on first boot. Wait a few seconds for the health check to pass:
+
+```bash
+docker compose ps              # STATE should be "running (healthy)"
+```
+
+#### 2. Build and run the collector
+
+```bash
+make build                     # builds build/csf-collector
+./build/csf-collector --config collector-config.yaml &
+```
+
+The collector listens on:
+- **4317** — OTLP gRPC
+- **4318** — OTLP HTTP (used by the seed script)
+- **8888** — Prometheus metrics
+- **55679** — zPages debug UI
+
+Without cloud credentials configured, no live data flows in — but you can seed sample data in step 5.
+
+#### 3. Build and run the API server
 
 ```bash
 go build -o build/csf-api ./cmd/api/
-./build/csf-api
+./build/csf-api &
 ```
 
-### 4. Start the dashboard
+The API runs on `http://localhost:8080`. Verify with:
+
+```bash
+curl http://localhost:8080/api/v1/health
+```
+
+#### 4. Start the dashboard
 
 ```bash
 cd dashboard && npm ci && npm run dev
 ```
 
-### 5. (Optional) Seed sample data
+The dashboard runs on `http://localhost:5173`.
+
+#### 5. Seed sample data
 
 ```bash
 make seed
+```
+
+This sends 5 sample OCSF findings to the collector via OTLP HTTP — an AWS GuardDuty detection, an Inspector vulnerability, a Security Hub compliance finding, a GitHub CodeQL vulnerability, and a secret-scanning alert. Data flows through the pipeline into the graph and is immediately visible in the API and dashboard.
+
+Verify data landed:
+
+```bash
+curl http://localhost:8080/api/v1/findings
+curl http://localhost:8080/api/v1/graph/stats
+```
+
+#### 6. Stop everything
+
+```bash
+kill %1 %2                    # stop collector and API (background jobs)
+docker compose down           # stop PostgreSQL
+```
+
+### Connecting cloud sources
+
+To ingest live findings, uncomment and configure receivers in `collector-config.yaml`:
+
+| Source | Credentials | How to provide |
+|--------|-------------|----------------|
+| **AWS Security Hub** | AWS access key or IAM role | Standard AWS SDK chain: `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` env vars, `~/.aws/credentials`, or EC2 instance role |
+| **GitHub GHAS** | Personal access token or GitHub App | `export GITHUB_TOKEN=ghp_...` then reference `${GITHUB_TOKEN}` in config |
+| **GCP SCC** | GCP service account key | _Receiver not yet implemented_ |
+| **Azure Defender** | Azure AD app credentials | _Receiver not yet implemented_ |
+
+Example — enable GitHub GHAS:
+
+```yaml
+# In collector-config.yaml, uncomment and edit:
+githubghas:
+  owner: your-org
+  repos: [repo1, repo2]
+  token: ${GITHUB_TOKEN}
+  poll_interval: 5m
+  enable_code_scanning: true
+  enable_dependabot: true
+  enable_secret_scanning: true
+```
+
+Then add `githubghas` to the pipeline's receivers list:
+
+```yaml
+service:
+  pipelines:
+    logs/security:
+      receivers: [otlp, githubghas]
 ```
 
 ## Project Structure

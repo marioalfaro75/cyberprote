@@ -141,7 +141,7 @@ func generateSampleFindings() []interface{} {
 			},
 		},
 
-		// 3. Security Hub compliance finding
+		// 3. Security Hub compliance finding — S3.4 FAILED
 		ocsf.ComplianceFinding{
 			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
 			SeverityID: ocsf.SeverityMedium, Severity: "Medium",
@@ -159,6 +159,338 @@ func generateSampleFindings() []interface{} {
 			},
 			Resources: []ocsf.Resource{
 				{UID: "arn:aws:s3:::public-data-bucket", Type: "AwsS3Bucket", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+		},
+
+		// --- Additional compliance findings for dashboard demo ---
+
+		// 6. IAM.4 — Root account has access keys (FAILED)
+		ocsf.ComplianceFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
+			SeverityID: ocsf.SeverityCritical, Severity: "Critical",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "Root user account has active access keys",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Security Hub", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:securityhub:us-east-1:123456789012:finding/seed-006",
+				Title: "IAM.4 IAM root user access key should not exist",
+			},
+			Compliance: &ocsf.Compliance{
+				Status: "FAILED", Control: "IAM.4",
+				Standards: []string{"CIS AWS Foundations Benchmark v1.4.0", "NIST CSF 2.0"},
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:iam::123456789012:root", Type: "AwsIamUser", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+		},
+
+		// 7. IAM.6 — MFA enabled for root (PASSED)
+		ocsf.ComplianceFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
+			SeverityID: ocsf.SeverityInformational, Severity: "Informational",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "Hardware MFA is enabled for root user",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Security Hub", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:securityhub:us-east-1:123456789012:finding/seed-007",
+				Title: "IAM.6 Hardware MFA should be enabled for the root user",
+			},
+			Compliance: &ocsf.Compliance{
+				Status: "PASSED", Control: "IAM.6",
+				Standards: []string{"CIS AWS Foundations Benchmark v1.4.0"},
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:iam::123456789012:root", Type: "AwsIamUser", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+		},
+
+		// 8. CloudTrail.1 — CloudTrail enabled (PASSED)
+		ocsf.ComplianceFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
+			SeverityID: ocsf.SeverityInformational, Severity: "Informational",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "CloudTrail is enabled in all regions",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Security Hub", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:securityhub:us-east-1:123456789012:finding/seed-008",
+				Title: "CloudTrail.1 CloudTrail should be enabled and configured with at least one multi-Region trail",
+			},
+			Compliance: &ocsf.Compliance{
+				Status: "PASSED", Control: "CloudTrail.1",
+				Standards: []string{"CIS AWS Foundations Benchmark v1.4.0"},
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:cloudtrail:us-east-1:123456789012:trail/management-trail", Type: "AwsCloudTrailTrail", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+		},
+
+		// 9. EBS.1 — EBS encryption (PASSED)
+		ocsf.ComplianceFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
+			SeverityID: ocsf.SeverityInformational, Severity: "Informational",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "EBS default encryption is enabled",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Security Hub", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:securityhub:us-east-1:123456789012:finding/seed-009",
+				Title: "EBS.1 Amazon EBS snapshots should not be publicly restorable",
+			},
+			Compliance: &ocsf.Compliance{
+				Status: "PASSED", Control: "EBS.1",
+				Standards: []string{"CIS AWS Foundations Benchmark v1.4.0"},
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:ec2:us-east-1:123456789012:volume/vol-0abc123", Type: "AwsEc2Volume", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+		},
+
+		// 10. VPC.1 — Default security group restricts traffic (FAILED)
+		ocsf.ComplianceFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
+			SeverityID: ocsf.SeverityHigh, Severity: "High",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "Default security group allows unrestricted traffic",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Security Hub", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:securityhub:us-east-1:123456789012:finding/seed-010",
+				Title: "VPC.1 Default security group should restrict all traffic",
+			},
+			Compliance: &ocsf.Compliance{
+				Status: "FAILED", Control: "VPC.1",
+				Standards: []string{"CIS AWS Foundations Benchmark v1.4.0"},
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:ec2:us-east-1:123456789012:security-group/sg-default", Type: "AwsEc2SecurityGroup", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+		},
+
+		// 11. GuardDuty.1 — GuardDuty enabled (PASSED)
+		ocsf.ComplianceFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
+			SeverityID: ocsf.SeverityInformational, Severity: "Informational",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "GuardDuty is enabled",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Security Hub", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:securityhub:us-east-1:123456789012:finding/seed-011",
+				Title: "GuardDuty.1 GuardDuty should be enabled",
+			},
+			Compliance: &ocsf.Compliance{
+				Status: "PASSED", Control: "GuardDuty.1",
+				Standards: []string{"NIST CSF 2.0"},
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:guardduty:us-east-1:123456789012:detector/abc123", Type: "AwsGuardDutyDetector", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+		},
+
+		// 12. RDS.3 — RDS encryption (FAILED)
+		ocsf.ComplianceFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
+			SeverityID: ocsf.SeverityHigh, Severity: "High",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "RDS DB instance does not have encryption at rest enabled",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Security Hub", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:securityhub:us-east-1:123456789012:finding/seed-012",
+				Title: "RDS.3 RDS DB instances should have encryption at rest enabled",
+			},
+			Compliance: &ocsf.Compliance{
+				Status: "FAILED", Control: "RDS.3",
+				Standards: []string{"CIS AWS Foundations Benchmark v1.4.0"},
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:rds:us-east-1:123456789012:db:prod-db", Type: "AwsRdsDbInstance", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+		},
+
+		// 13. IAM.5 — MFA for console users (FAILED)
+		ocsf.ComplianceFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
+			SeverityID: ocsf.SeverityMedium, Severity: "Medium",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "IAM users with console access do not have MFA enabled",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Security Hub", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:securityhub:us-east-1:123456789012:finding/seed-013",
+				Title: "IAM.5 MFA should be enabled for all IAM users that have console password",
+			},
+			Compliance: &ocsf.Compliance{
+				Status: "FAILED", Control: "IAM.5",
+				Standards: []string{"CIS AWS Foundations Benchmark v1.4.0"},
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:iam::123456789012:user/developer", Type: "AwsIamUser", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+		},
+
+		// 14. EC2.1 — Security groups restrict SSH (PASSED)
+		ocsf.ComplianceFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
+			SeverityID: ocsf.SeverityInformational, Severity: "Informational",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "No security groups allow unrestricted SSH access",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Security Hub", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:securityhub:us-east-1:123456789012:finding/seed-014",
+				Title: "EC2.1 Amazon EBS snapshots should not be public",
+			},
+			Compliance: &ocsf.Compliance{
+				Status: "PASSED", Control: "EC2.1",
+				Standards: []string{"CIS AWS Foundations Benchmark v1.4.0"},
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:ec2:us-east-1:123456789012:security-group/sg-web", Type: "AwsEc2SecurityGroup", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+		},
+
+		// 15. S3.5 — S3 bucket versioning (FAILED)
+		ocsf.ComplianceFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
+			SeverityID: ocsf.SeverityMedium, Severity: "Medium",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "S3 bucket does not have versioning enabled",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Security Hub", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:securityhub:us-east-1:123456789012:finding/seed-015",
+				Title: "S3.5 S3 general purpose buckets should require requests to use SSL",
+			},
+			Compliance: &ocsf.Compliance{
+				Status: "FAILED", Control: "S3.5",
+				Standards: []string{"CIS AWS Foundations Benchmark v1.4.0"},
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:s3:::logs-bucket", Type: "AwsS3Bucket", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+		},
+
+		// 16. IAM.1 — Unused credentials disabled (PASSED)
+		ocsf.ComplianceFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
+			SeverityID: ocsf.SeverityInformational, Severity: "Informational",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "No IAM credentials unused for 45+ days",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Security Hub", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:securityhub:us-east-1:123456789012:finding/seed-016",
+				Title: "IAM.1 IAM policies should not allow full * administrative privileges",
+			},
+			Compliance: &ocsf.Compliance{
+				Status: "PASSED", Control: "IAM.1",
+				Standards: []string{"CIS AWS Foundations Benchmark v1.4.0"},
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:iam::123456789012:user/svc-deploy", Type: "AwsIamUser", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+		},
+
+		// 17. VPC.2 — VPC flow logs enabled (FAILED)
+		ocsf.ComplianceFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
+			SeverityID: ocsf.SeverityMedium, Severity: "Medium",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "VPC flow logging is not enabled",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Security Hub", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:securityhub:us-east-1:123456789012:finding/seed-017",
+				Title: "VPC.2 VPC default security group should not allow inbound and outbound traffic",
+			},
+			Compliance: &ocsf.Compliance{
+				Status: "FAILED", Control: "VPC.2",
+				Standards: []string{"CIS AWS Foundations Benchmark v1.4.0"},
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-main", Type: "AwsEc2Vpc", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+		},
+
+		// 18. KMS.1 — KMS key rotation (PASSED)
+		ocsf.ComplianceFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
+			SeverityID: ocsf.SeverityInformational, Severity: "Informational",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "KMS customer-managed keys have rotation enabled",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Security Hub", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:securityhub:us-east-1:123456789012:finding/seed-018",
+				Title: "KMS.1 IAM customer managed policies should not allow decryption actions on all KMS keys",
+			},
+			Compliance: &ocsf.Compliance{
+				Status: "PASSED", Control: "KMS.1",
+				Standards: []string{"NIST CSF 2.0"},
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:kms:us-east-1:123456789012:key/mrk-abc123", Type: "AwsKmsKey", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+		},
+
+		// 19. SecurityHub.1 — Security Hub enabled (PASSED)
+		ocsf.ComplianceFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
+			SeverityID: ocsf.SeverityInformational, Severity: "Informational",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "AWS Security Hub is enabled",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Security Hub", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:securityhub:us-east-1:123456789012:finding/seed-019",
+				Title: "SecurityHub.1 Security Hub should be enabled",
+			},
+			Compliance: &ocsf.Compliance{
+				Status: "PASSED", Control: "SecurityHub.1",
+				Standards: []string{"NIST CSF 2.0"},
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:securityhub:us-east-1:123456789012:hub/default", Type: "AwsSecurityHubHub", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+		},
+
+		// 20. IAM.8 — Password policy (FAILED)
+		ocsf.ComplianceFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassComplianceFinding,
+			SeverityID: ocsf.SeverityMedium, Severity: "Medium",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "Password policy does not meet minimum length requirement",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Security Hub", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:securityhub:us-east-1:123456789012:finding/seed-020",
+				Title: "IAM.8 Unused IAM user credentials should be removed",
+			},
+			Compliance: &ocsf.Compliance{
+				Status: "FAILED", Control: "IAM.8",
+				Standards: []string{"CIS AWS Foundations Benchmark v1.4.0"},
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:iam::123456789012:account-password-policy", Type: "AwsIamAccountPasswordPolicy", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
 			},
 			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
 		},

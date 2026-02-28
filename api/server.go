@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cloud-security-fabric/csf/internal/graph"
+	"github.com/cloud-security-fabric/csf/internal/settings"
 	"github.com/cloud-security-fabric/csf/policy"
 	"github.com/cloud-security-fabric/csf/scoring"
 )
@@ -19,15 +20,17 @@ type Server struct {
 	graphService  *graph.GraphService
 	policyEngine  *policy.Engine
 	scoringEngine *scoring.Engine
+	settingsStore *settings.FileStore
 	httpServer    *http.Server
 }
 
 // NewServer creates a new API server.
-func NewServer(gs *graph.GraphService, pe *policy.Engine, se *scoring.Engine) *Server {
+func NewServer(gs *graph.GraphService, pe *policy.Engine, se *scoring.Engine, ss *settings.FileStore) *Server {
 	s := &Server{
 		graphService:  gs,
 		policyEngine:  pe,
 		scoringEngine: se,
+		settingsStore: ss,
 	}
 	return s
 }
@@ -65,6 +68,13 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/policies/evaluate", s.handleEvaluatePolicy)
 	mux.HandleFunc("GET /api/v1/policies", s.handleListPolicies)
 	mux.HandleFunc("GET /api/v1/graph/stats", s.handleGraphStats)
+
+	// Settings / connector configuration
+	mux.HandleFunc("GET /api/v1/settings/connectors", s.handleGetConnectors)
+	mux.HandleFunc("PUT /api/v1/settings/connectors", s.handleUpdateConnectors)
+	mux.HandleFunc("PUT /api/v1/settings/connectors/{provider}/secrets", s.handleUpdateSecrets)
+	mux.HandleFunc("POST /api/v1/settings/connectors/{provider}/test", s.handleTestConnection)
+	mux.HandleFunc("POST /api/v1/settings/apply", s.handleApplySettings)
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {

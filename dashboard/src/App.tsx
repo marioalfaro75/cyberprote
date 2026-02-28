@@ -5,6 +5,7 @@ import ToxicCombinations from './pages/ToxicCombinations'
 import FindingsList from './pages/FindingsList'
 import ConnectorHealth from './pages/ConnectorHealth'
 import Policies from './pages/Policies'
+import Settings from './pages/Settings'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/findings" element={<FindingsList />} />
         <Route path="/connectors" element={<ConnectorHealth />} />
         <Route path="/policies" element={<Policies />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </Layout>
   )

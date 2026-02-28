@@ -1,3 +1,5 @@
+import type { ProviderSettings, SaveResult, TestConnectionResult, ApplyResult } from './settings-types'
+
 const BASE_URL = '/api/v1'
 
 async function fetchJSON<T>(path: string, options?: RequestInit): Promise<T> {
@@ -23,4 +25,23 @@ export const api = {
     body: JSON.stringify(finding),
   }),
   getGraphStats: () => fetchJSON<Record<string, number>>('/graph/stats'),
+
+  // Settings / connector configuration
+  getConnectorSettings: () => fetchJSON<ProviderSettings>('/settings/connectors'),
+  updateConnectorSettings: (settings: ProviderSettings) =>
+    fetchJSON<SaveResult>('/settings/connectors', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    }),
+  updateConnectorSecrets: (provider: string, key: string, value: string) =>
+    fetchJSON<{ saved: boolean; restart_required: boolean }>(
+      `/settings/connectors/${provider}/secrets`,
+      { method: 'PUT', body: JSON.stringify({ key, value }) },
+    ),
+  testConnectorConnection: (provider: string) =>
+    fetchJSON<TestConnectionResult>(`/settings/connectors/${provider}/test`, {
+      method: 'POST',
+    }),
+  applySettings: () =>
+    fetchJSON<ApplyResult>('/settings/apply', { method: 'POST' }),
 }

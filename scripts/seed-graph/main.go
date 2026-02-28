@@ -4,12 +4,14 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/cloud-security-fabric/csf/internal/graph"
 	"github.com/cloud-security-fabric/csf/internal/ocsf"
 )
 
@@ -41,7 +43,10 @@ func main() {
 		fmt.Printf("  [%d] %s → %d\n", i+1, getTitle(f), resp.StatusCode)
 	}
 
-	fmt.Println("Done!")
+	fmt.Println("Done sending findings!")
+
+	// Seed NetworkPath nodes directly to graph for exposure demo
+	seedNetworkPaths()
 }
 
 func buildOTLPPayload(findingJSON []byte) map[string]interface{} {
@@ -95,6 +100,9 @@ func getTitle(f interface{}) string {
 	}
 }
 
+func float64Ptr(f float64) *float64 { return &f }
+func boolPtr(b bool) *bool         { return &b }
+
 func generateSampleFindings() []interface{} {
 	now := time.Now()
 	confidence := int32(90)
@@ -137,7 +145,7 @@ func generateSampleFindings() []interface{} {
 			},
 			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
 			Vulnerabilities: []ocsf.Vulnerability{
-				{UID: "CVE-2024-1234", Title: "RCE in foo", CVE: &ocsf.CVE{UID: "CVE-2024-1234", CVSS: []ocsf.CVSS{{Version: "3.1", BaseScore: 9.8, Severity: "Critical"}}}},
+				{UID: "CVE-2024-1234", Title: "RCE in foo", CVE: &ocsf.CVE{UID: "CVE-2024-1234", CVSS: []ocsf.CVSS{{Version: "3.1", BaseScore: 9.8, Severity: "Critical"}}, EPSSScore: float64Ptr(0.95), IsExploited: boolPtr(true)}},
 			},
 		},
 
@@ -511,7 +519,158 @@ func generateSampleFindings() []interface{} {
 				{UID: "github.com/myorg/api-server", Type: "CodeRepository", Name: "api-server"},
 			},
 			Vulnerabilities: []ocsf.Vulnerability{
-				{UID: "js/sql-injection", Title: "SQL injection", AffectedCode: []ocsf.AffectedCode{{FilePath: "src/db.js", StartLine: 15, EndLine: 20}}},
+				{UID: "js/sql-injection", Title: "SQL injection", AffectedCode: []ocsf.AffectedCode{{FilePath: "src/db.js", StartLine: 15, EndLine: 20}}, CVE: &ocsf.CVE{UID: "js/sql-injection", EPSSScore: float64Ptr(0.15)}},
+			},
+		},
+
+		// --- Additional vulnerability findings with EPSS/KEV for threat intel demo ---
+
+		// Threat Intel: Log4Shell — Critical, high EPSS, KEV
+		ocsf.VulnerabilityFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassVulnerabilityFind,
+			SeverityID: ocsf.SeverityCritical, Severity: "Critical",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "CVE-2021-44228 — Log4Shell Remote Code Execution",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Inspector", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:inspector2:us-east-1:123456789012:finding/seed-ti-001",
+				Title: "CVE-2021-44228 — Log4Shell RCE",
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:ec2:us-east-1:123456789012:instance/i-java-app", Type: "AwsEc2Instance", Name: "java-app-server", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+			Vulnerabilities: []ocsf.Vulnerability{
+				{UID: "CVE-2021-44228", Title: "Log4Shell RCE", Severity: "Critical", CVE: &ocsf.CVE{UID: "CVE-2021-44228", CVSS: []ocsf.CVSS{{Version: "3.1", BaseScore: 10.0, Severity: "Critical"}}, EPSSScore: float64Ptr(0.972), IsExploited: boolPtr(true)}},
+			},
+		},
+
+		// Threat Intel: Medium EPSS vuln, not in KEV
+		ocsf.VulnerabilityFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassVulnerabilityFind,
+			SeverityID: ocsf.SeverityHigh, Severity: "High",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "CVE-2023-44487 — HTTP/2 Rapid Reset Attack",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Inspector", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:inspector2:us-east-1:123456789012:finding/seed-ti-002",
+				Title: "CVE-2023-44487 — HTTP/2 Rapid Reset",
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:ecs:us-east-1:123456789012:service/api-gateway", Type: "AwsEcsService", Name: "api-gateway", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+			Vulnerabilities: []ocsf.Vulnerability{
+				{UID: "CVE-2023-44487", Title: "HTTP/2 Rapid Reset", Severity: "High", CVE: &ocsf.CVE{UID: "CVE-2023-44487", CVSS: []ocsf.CVSS{{Version: "3.1", BaseScore: 7.5, Severity: "High"}}, EPSSScore: float64Ptr(0.45), IsExploited: boolPtr(false)}},
+			},
+		},
+
+		// Threat Intel: Low EPSS, low severity
+		ocsf.VulnerabilityFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassVulnerabilityFind,
+			SeverityID: ocsf.SeverityLow, Severity: "Low",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "CVE-2024-5678 — Information disclosure in headers",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Inspector", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:inspector2:us-east-1:123456789012:finding/seed-ti-003",
+				Title: "CVE-2024-5678 — Info disclosure",
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:ec2:us-east-1:123456789012:instance/i-web-proxy", Type: "AwsEc2Instance", Name: "web-proxy", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+			Vulnerabilities: []ocsf.Vulnerability{
+				{UID: "CVE-2024-5678", Title: "Info disclosure in headers", Severity: "Low", CVE: &ocsf.CVE{UID: "CVE-2024-5678", CVSS: []ocsf.CVSS{{Version: "3.1", BaseScore: 3.1, Severity: "Low"}}, EPSSScore: float64Ptr(0.02), IsExploited: boolPtr(false)}},
+			},
+		},
+
+		// Threat Intel: KEV, medium EPSS
+		ocsf.VulnerabilityFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassVulnerabilityFind,
+			SeverityID: ocsf.SeverityHigh, Severity: "High",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "CVE-2023-23397 — Outlook Elevation of Privilege",
+			Time:     ocsf.NewTime(now),
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "Inspector", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:inspector2:us-east-1:123456789012:finding/seed-ti-004",
+				Title: "CVE-2023-23397 — Outlook EoP",
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:ec2:us-east-1:123456789012:instance/i-mail-server", Type: "AwsEc2Instance", Name: "mail-server", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+			Vulnerabilities: []ocsf.Vulnerability{
+				{UID: "CVE-2023-23397", Title: "Outlook EoP", Severity: "High", CVE: &ocsf.CVE{UID: "CVE-2023-23397", CVSS: []ocsf.CVSS{{Version: "3.1", BaseScore: 9.8, Severity: "Critical"}}, EPSSScore: float64Ptr(0.72), IsExploited: boolPtr(true)}},
+			},
+		},
+
+		// --- Additional detection findings with ATT&CK mappings ---
+
+		// Threat Intel: Credential Access detection
+		ocsf.DetectionFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassDetectionFinding,
+			SeverityID: ocsf.SeverityHigh, Severity: "High",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "Unusual credential access pattern detected",
+			Time:     ocsf.NewTime(now), Confidence: &confidence,
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "GuardDuty", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:guardduty:us-east-1:123456789012:finding/seed-ti-005",
+				Title: "CredentialAccess:IAMUser/AnomalousBehavior",
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:iam::123456789012:user/svc-deploy", Type: "AwsIamUser", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+			Attacks: []ocsf.Attack{
+				{Tactic: &ocsf.AttackTactic{UID: "TA0006", Name: "Credential Access"}, Technique: &ocsf.AttackTechnique{UID: "T1110", Name: "Brute Force"}},
+			},
+		},
+
+		// Threat Intel: Lateral Movement detection
+		ocsf.DetectionFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassDetectionFinding,
+			SeverityID: ocsf.SeverityCritical, Severity: "Critical",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "Lateral movement via SSM detected",
+			Time:     ocsf.NewTime(now), Confidence: &confidence,
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "GuardDuty", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:guardduty:us-east-1:123456789012:finding/seed-ti-006",
+				Title: "LateralMovement:EC2/SSMSessionFromCompromisedInstance",
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:ec2:us-east-1:123456789012:instance/i-compromised", Type: "AwsEc2Instance", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+			Attacks: []ocsf.Attack{
+				{Tactic: &ocsf.AttackTactic{UID: "TA0008", Name: "Lateral Movement"}, Technique: &ocsf.AttackTechnique{UID: "T1021", Name: "Remote Services"}},
+			},
+		},
+
+		// Threat Intel: Exfiltration detection
+		ocsf.DetectionFinding{
+			ActivityID: ocsf.ActivityCreate, CategoryUID: 2, ClassUID: ocsf.ClassDetectionFinding,
+			SeverityID: ocsf.SeverityCritical, Severity: "Critical",
+			StatusID: ocsf.StatusNew, Status: "New",
+			Message:  "Large data transfer to external S3 bucket",
+			Time:     ocsf.NewTime(now), Confidence: &confidence,
+			Metadata: ocsf.Metadata{Product: &ocsf.Product{Name: "GuardDuty", VendorName: "AWS"}},
+			FindingInfo: &ocsf.FindingInfo{
+				UID:   "arn:aws:guardduty:us-east-1:123456789012:finding/seed-ti-007",
+				Title: "Exfiltration:S3/AnomalousDataTransfer",
+			},
+			Resources: []ocsf.Resource{
+				{UID: "arn:aws:s3:::sensitive-data-bucket", Type: "AwsS3Bucket", Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"}},
+			},
+			Cloud: &ocsf.Cloud{Provider: "aws", AccountID: "123456789012", Region: "us-east-1"},
+			Attacks: []ocsf.Attack{
+				{Tactic: &ocsf.AttackTactic{UID: "TA0010", Name: "Exfiltration"}, Technique: &ocsf.AttackTechnique{UID: "T1567", Name: "Exfiltration Over Web Service"}},
 			},
 		},
 
@@ -535,4 +694,68 @@ func generateSampleFindings() []interface{} {
 			},
 		},
 	}
+}
+
+// seedNetworkPaths creates NetworkPath nodes and EXPOSES edges directly in the graph
+// for the exposure demo. Resources must already exist from the OTLP pipeline above.
+func seedNetworkPaths() {
+	dsn := os.Getenv("CSF_DSN")
+	if dsn == "" {
+		dsn = "postgres://csf:csf-dev-password@localhost:5432/csf?sslmode=disable"
+	}
+
+	gs, err := graph.NewGraphService(dsn, "security_fabric")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "graph service for network paths: %v\n", err)
+		return
+	}
+	defer gs.Close()
+
+	ctx := context.Background()
+
+	type exposedPath struct {
+		pathUID     string
+		endpoint    string
+		protocol    string
+		port        int
+		resourceUID string
+	}
+
+	paths := []exposedPath{
+		{
+			pathUID:     "netpath-api-gw-443",
+			endpoint:    "api.example.com",
+			protocol:    "HTTPS",
+			port:        443,
+			resourceUID: "arn:aws:ecs:us-east-1:123456789012:service/api-gateway",
+		},
+		{
+			pathUID:     "netpath-web-proxy-80",
+			endpoint:    "web.example.com",
+			protocol:    "HTTP",
+			port:        80,
+			resourceUID: "arn:aws:ec2:us-east-1:123456789012:instance/i-web-proxy",
+		},
+		{
+			pathUID:     "netpath-java-app-8080",
+			endpoint:    "app.example.com",
+			protocol:    "HTTP",
+			port:        8080,
+			resourceUID: "arn:aws:ec2:us-east-1:123456789012:instance/i-java-app",
+		},
+	}
+
+	fmt.Printf("Seeding %d network paths directly to graph...\n", len(paths))
+	for _, p := range paths {
+		if err := gs.UpsertNetworkPath(ctx, p.pathUID, p.endpoint, p.protocol, p.port, true); err != nil {
+			fmt.Fprintf(os.Stderr, "  upsert network path %s: %v\n", p.pathUID, err)
+			continue
+		}
+		if err := gs.CreateEdge(ctx, "Resource", p.resourceUID, "NetworkPath", p.pathUID, graph.EdgeEXPOSES, nil); err != nil {
+			fmt.Fprintf(os.Stderr, "  create EXPOSES edge %s → %s: %v\n", p.resourceUID, p.pathUID, err)
+			continue
+		}
+		fmt.Printf("  [+] %s → %s:%d\n", p.resourceUID, p.endpoint, p.port)
+	}
+	fmt.Println("Network paths seeded!")
 }

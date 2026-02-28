@@ -27,16 +27,16 @@ export default function AWSForm({ config, onChange }: AWSFormProps) {
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-gray-500 dark:text-gray-400">
         AWS uses the SDK credential chain — configure via environment variables or instance role.
       </p>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Region</label>
         <select
           value={config.region}
           onChange={(e) => update({ region: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
         >
           {AWS_REGIONS.map((r) => (
             <option key={r} value={r}>{r}</option>
@@ -46,53 +46,53 @@ export default function AWSForm({ config, onChange }: AWSFormProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Poll Interval</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Poll Interval</label>
           <input
             type="text"
             value={config.poll_interval}
             onChange={(e) => update({ poll_interval: e.target.value })}
             placeholder="5m"
-            className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Batch Size</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Batch Size</label>
           <input
             type="number"
             value={config.batch_size}
             onChange={(e) => update({ batch_size: parseInt(e.target.value) || 100 })}
             min={1}
             max={100}
-            className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Assume Role ARN</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assume Role ARN</label>
         <input
           type="text"
           value={config.assume_role}
           onChange={(e) => update({ assume_role: e.target.value })}
           placeholder="arn:aws:iam::123456789012:role/SecurityHubReader"
-          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
         />
       </div>
 
       {config.assume_role && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">External ID</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">External ID</label>
           <input
             type="text"
             value={config.external_id}
             onChange={(e) => update({ external_id: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
           />
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Severity Labels</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Severity Labels</label>
         <div className="flex flex-wrap gap-2">
           {SEVERITY_OPTIONS.map((s) => (
             <label key={s} className="inline-flex items-center gap-1 text-sm">
@@ -109,11 +109,11 @@ export default function AWSForm({ config, onChange }: AWSFormProps) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Record State</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Record State</label>
         <select
           value={config.record_state}
           onChange={(e) => update({ record_state: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
         >
           <option value="">All</option>
           <option value="ACTIVE">ACTIVE</option>

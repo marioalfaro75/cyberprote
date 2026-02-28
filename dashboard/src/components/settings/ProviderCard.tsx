@@ -29,9 +29,9 @@ export default function ProviderCard({ name, provider, color, enabled, onToggle,
   }
 
   return (
-    <div className={`border rounded-lg overflow-hidden ${enabled ? 'border-gray-300' : 'border-gray-200'}`}>
-      <div className="flex items-center justify-between px-4 py-3" style={{ borderLeft: `4px solid ${color}` }}>
-        <h3 className="font-medium text-gray-900">{name}</h3>
+    <div className={`border rounded-lg overflow-hidden ${enabled ? 'border-gray-300 dark:border-gray-600' : 'border-gray-200 dark:border-gray-700'}`}>
+      <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800" style={{ borderLeft: `4px solid ${color}` }}>
+        <h3 className="font-medium text-gray-900 dark:text-gray-100">{name}</h3>
         <label className="relative inline-flex items-center cursor-pointer">
           <input
             type="checkbox"
@@ -43,14 +43,14 @@ export default function ProviderCard({ name, provider, color, enabled, onToggle,
         </label>
       </div>
       {enabled && (
-        <div className="px-4 pb-4 space-y-4 border-t border-gray-100 pt-4">
+        <div className="px-4 pb-4 space-y-4 border-t border-gray-100 dark:border-gray-700 pt-4 bg-white dark:bg-gray-800">
           {children}
-          <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+          <div className="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
             <button
               type="button"
               onClick={handleTest}
               disabled={testing}
-              className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+              className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
             >
               {testing ? 'Testing...' : 'Test Connection'}
             </button>

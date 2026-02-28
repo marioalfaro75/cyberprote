@@ -1,0 +1,251 @@
+version: "15.1"
+domain: enterprise
+tactics:
+  - uid: TA0043
+    name: Reconnaissance
+    techniques:
+      - uid: T1595
+        name: Active Scanning
+      - uid: T1592
+        name: Gather Victim Host Information
+      - uid: T1589
+        name: Gather Victim Identity Information
+      - uid: T1590
+        name: Gather Victim Network Information
+      - uid: T1591
+        name: Gather Victim Org Information
+  - uid: TA0042
+    name: Resource Development
+    techniques:
+      - uid: T1583
+        name: Acquire Infrastructure
+      - uid: T1586
+        name: Compromise Accounts
+      - uid: T1584
+        name: Compromise Infrastructure
+      - uid: T1587
+        name: Develop Capabilities
+      - uid: T1585
+        name: Establish Accounts
+  - uid: TA0001
+    name: Initial Access
+    techniques:
+      - uid: T1189
+        name: Drive-by Compromise
+      - uid: T1190
+        name: Exploit Public-Facing Application
+      - uid: T1133
+        name: External Remote Services
+      - uid: T1566
+        name: Phishing
+      - uid: T1091
+        name: Replication Through Removable Media
+      - uid: T1195
+        name: Supply Chain Compromise
+      - uid: T1199
+        name: Trusted Relationship
+      - uid: T1078
+        name: Valid Accounts
+  - uid: TA0002
+    name: Execution
+    techniques:
+      - uid: T1059
+        name: Command and Scripting Interpreter
+      - uid: T1203
+        name: Exploitation for Client Execution
+      - uid: T1559
+        name: Inter-Process Communication
+      - uid: T1106
+        name: Native API
+      - uid: T1053
+        name: Scheduled Task/Job
+      - uid: T1648
+        name: Serverless Execution
+      - uid: T1129
+        name: Shared Modules
+      - uid: T1204
+        name: User Execution
+  - uid: TA0003
+    name: Persistence
+    techniques:
+      - uid: T1098
+        name: Account Manipulation
+      - uid: T1197
+        name: BITS Jobs
+      - uid: T1547
+        name: Boot or Logon Autostart Execution
+      - uid: T1136
+        name: Create Account
+      - uid: T1543
+        name: Create or Modify System Process
+      - uid: T1546
+        name: Event Triggered Execution
+      - uid: T1133
+        name: External Remote Services
+      - uid: T1574
+        name: Hijack Execution Flow
+      - uid: T1053
+        name: Scheduled Task/Job
+      - uid: T1078
+        name: Valid Accounts
+  - uid: TA0004
+    name: Privilege Escalation
+    techniques:
+      - uid: T1548
+        name: Abuse Elevation Control Mechanism
+      - uid: T1134
+        name: Access Token Manipulation
+      - uid: T1547
+        name: Boot or Logon Autostart Execution
+      - uid: T1484
+        name: Domain Policy Modification
+      - uid: T1611
+        name: Escape to Host
+      - uid: T1068
+        name: Exploitation for Privilege Escalation
+      - uid: T1055
+        name: Process Injection
+      - uid: T1078
+        name: Valid Accounts
+  - uid: TA0005
+    name: Defense Evasion
+    techniques:
+      - uid: T1548
+        name: Abuse Elevation Control Mechanism
+      - uid: T1134
+        name: Access Token Manipulation
+      - uid: T1197
+        name: BITS Jobs
+      - uid: T1140
+        name: Deobfuscate/Decode Files or Information
+      - uid: T1562
+        name: Impair Defenses
+      - uid: T1036
+        name: Masquerading
+      - uid: T1027
+        name: Obfuscated Files or Information
+      - uid: T1055
+        name: Process Injection
+      - uid: T1218
+        name: System Binary Proxy Execution
+      - uid: T1078
+        name: Valid Accounts
+  - uid: TA0006
+    name: Credential Access
+    techniques:
+      - uid: T1110
+        name: Brute Force
+      - uid: T1555
+        name: Credentials from Password Stores
+      - uid: T1212
+        name: Exploitation for Credential Access
+      - uid: T1187
+        name: Forced Authentication
+      - uid: T1003
+        name: OS Credential Dumping
+      - uid: T1528
+        name: Steal Application Access Token
+      - uid: T1539
+        name: Steal Web Session Cookie
+      - uid: T1552
+        name: Unsecured Credentials
+  - uid: TA0007
+    name: Discovery
+    techniques:
+      - uid: T1087
+        name: Account Discovery
+      - uid: T1580
+        name: Cloud Infrastructure Discovery
+      - uid: T1538
+        name: Cloud Service Dashboard
+      - uid: T1046
+        name: Network Service Discovery
+      - uid: T1135
+        name: Network Share Discovery
+      - uid: T1069
+        name: Permission Groups Discovery
+      - uid: T1518
+        name: Software Discovery
+      - uid: T1082
+        name: System Information Discovery
+  - uid: TA0008
+    name: Lateral Movement
+    techniques:
+      - uid: T1210
+        name: Exploitation of Remote Services
+      - uid: T1534
+        name: Internal Spearphishing
+      - uid: T1570
+        name: Lateral Tool Transfer
+      - uid: T1021
+        name: Remote Services
+      - uid: T1080
+        name: Taint Shared Content
+      - uid: T1550
+        name: Use Alternate Authentication Material
+  - uid: TA0009
+    name: Collection
+    techniques:
+      - uid: T1560
+        name: Archive Collected Data
+      - uid: T1530
+        name: Data from Cloud Storage
+      - uid: T1213
+        name: Data from Information Repositories
+      - uid: T1005
+        name: Data from Local System
+      - uid: T1039
+        name: Data from Network Shared Drive
+      - uid: T1114
+        name: Email Collection
+  - uid: TA0011
+    name: Command and Control
+    techniques:
+      - uid: T1071
+        name: Application Layer Protocol
+      - uid: T1132
+        name: Data Encoding
+      - uid: T1568
+        name: Dynamic Resolution
+      - uid: T1573
+        name: Encrypted Channel
+      - uid: T1105
+        name: Ingress Tool Transfer
+      - uid: T1572
+        name: Protocol Tunneling
+      - uid: T1090
+        name: Proxy
+  - uid: TA0010
+    name: Exfiltration
+    techniques:
+      - uid: T1020
+        name: Automated Exfiltration
+      - uid: T1030
+        name: Data Transfer Size Limits
+      - uid: T1048
+        name: Exfiltration Over Alternative Protocol
+      - uid: T1041
+        name: Exfiltration Over C2 Channel
+      - uid: T1567
+        name: Exfiltration Over Web Service
+      - uid: T1029
+        name: Scheduled Transfer
+  - uid: TA0040
+    name: Impact
+    techniques:
+      - uid: T1531
+        name: Account Access Removal
+      - uid: T1485
+        name: Data Destruction
+      - uid: T1486
+        name: Data Encrypted for Impact
+      - uid: T1565
+        name: Data Manipulation
+      - uid: T1491
+        name: Defacement
+      - uid: T1499
+        name: Endpoint Denial of Service
+      - uid: T1498
+        name: Network Denial of Service
+      - uid: T1496
+        name: Resource Hijacking

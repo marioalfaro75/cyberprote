@@ -68,7 +68,7 @@ export default function ToxicCombinations() {
     <div>
       <h2 className="text-2xl font-bold mb-2">Toxic Combinations</h2>
       {!loadingCounts && (
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
           <span className="text-red-600 font-medium">{dangerCount} detected</span>
           {' · '}
           <span className="text-green-600 font-medium">{safeCount} clear</span>
@@ -85,12 +85,12 @@ export default function ToxicCombinations() {
             <button
               key={name}
               onClick={() => handleSelect(name)}
-              className={`text-left rounded-lg shadow p-4 border-2 transition-colors ${
+              className={`text-left rounded-lg shadow dark:shadow-gray-900/50 p-4 border-2 transition-colors ${
                 isSelected
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
                   : hasResults
-                    ? 'border-red-200 bg-white hover:border-red-400'
-                    : 'border-green-200 bg-white hover:border-green-400'
+                    ? 'border-red-200 dark:border-red-800 bg-white dark:bg-gray-800 hover:border-red-400'
+                    : 'border-green-200 dark:border-green-800 bg-white dark:bg-gray-800 hover:border-green-400'
               }`}
             >
               <div className="flex items-start justify-between mb-1">
@@ -106,7 +106,7 @@ export default function ToxicCombinations() {
                   <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-400">…</span>
                 )}
               </div>
-              <p className="text-xs text-gray-500">{DESCRIPTIONS[name] || 'Security pattern analysis'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{DESCRIPTIONS[name] || 'Security pattern analysis'}</p>
             </button>
           )
         })}
@@ -114,24 +114,24 @@ export default function ToxicCombinations() {
 
       {/* Result detail */}
       {selected && (
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-4">
           <h3 className="font-semibold mb-3">{formatSnakeCase(selected)}</h3>
           {results.length === 0 ? (
             <p className="text-green-600 text-sm">No toxic combinations detected for this pattern.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-sm">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Title / Name</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Severity</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Resource</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Title / Name</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Severity</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Resource</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Type</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {results.map((r, i) => (
-                    <tr key={i} className="hover:bg-gray-50">
+                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-3 py-2">{r.title || r.name || `Result ${i + 1}`}</td>
                       <td className="px-3 py-2">
                         {r.severity_id != null ? (
@@ -140,8 +140,8 @@ export default function ToxicCombinations() {
                           </span>
                         ) : '-'}
                       </td>
-                      <td className="px-3 py-2 text-gray-600">{r.resource_name || '-'}</td>
-                      <td className="px-3 py-2 text-gray-600">{r.type || '-'}</td>
+                      <td className="px-3 py-2 text-gray-600 dark:text-gray-400">{r.resource_name || '-'}</td>
+                      <td className="px-3 py-2 text-gray-600 dark:text-gray-400">{r.type || '-'}</td>
                     </tr>
                   ))}
                 </tbody>

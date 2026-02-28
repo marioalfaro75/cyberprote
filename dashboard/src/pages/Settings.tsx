@@ -68,15 +68,15 @@ export default function Settings() {
   }
 
   if (loading) {
-    return <div className="text-gray-500">Loading settings...</div>
+    return <div className="text-gray-500 dark:text-gray-400">Loading settings...</div>
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-sm text-gray-500 mt-1">Configure cloud provider connections</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Configure cloud provider connections</p>
         </div>
         <div className="flex gap-3">
           <button
@@ -85,7 +85,7 @@ export default function Settings() {
             className={`px-4 py-2 text-sm font-medium rounded ${
               isDirty
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
             } disabled:opacity-50`}
           >
             {saving ? 'Saving...' : 'Save'}
@@ -101,7 +101,7 @@ export default function Settings() {
       </div>
 
       {banner && (
-        <div className="mb-6 px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800 flex items-center justify-between">
+        <div className="mb-6 px-4 py-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg text-sm text-yellow-800 dark:text-yellow-200 flex items-center justify-between">
           <span>{banner}</span>
           <button onClick={() => setBanner(null)} className="text-yellow-600 hover:text-yellow-800 ml-4">
             Dismiss
@@ -110,7 +110,7 @@ export default function Settings() {
       )}
 
       {error && (
-        <div className="mb-6 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div className="mb-6 px-4 py-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
           {error}
         </div>
       )}

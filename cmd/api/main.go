@@ -9,6 +9,7 @@ import (
 	"github.com/cloud-security-fabric/csf/internal/compliance"
 	"github.com/cloud-security-fabric/csf/internal/graph"
 	"github.com/cloud-security-fabric/csf/internal/settings"
+	"github.com/cloud-security-fabric/csf/internal/threatintel"
 	"github.com/cloud-security-fabric/csf/policy"
 	"github.com/cloud-security-fabric/csf/scoring"
 )
@@ -45,9 +46,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	am, err := threatintel.LoadAttackMatrix()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "attack matrix: %v\n", err)
+		os.Exit(1)
+	}
+
 	settingsStore := settings.NewFileStore("./csf-settings.json", "./.csf-secrets.env")
 
-	server := api.NewServer(gs, pe, se, settingsStore, cat)
+	server := api.NewServer(gs, pe, se, settingsStore, cat, am)
 	fmt.Printf("CSF API server starting on %s\n", addr)
 	if err := server.Start(addr); err != nil {
 		fmt.Fprintf(os.Stderr, "server: %v\n", err)

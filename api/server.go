@@ -4,7 +4,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/cloud-security-fabric/csf/internal/compliance"
 	"github.com/cloud-security-fabric/csf/internal/graph"
 	"github.com/cloud-security-fabric/csf/internal/settings"
+	"github.com/cloud-security-fabric/csf/internal/threatintel"
 	"github.com/cloud-security-fabric/csf/policy"
 	"github.com/cloud-security-fabric/csf/scoring"
 )
@@ -23,17 +23,23 @@ type Server struct {
 	scoringEngine *scoring.Engine
 	settingsStore *settings.FileStore
 	catalog       *compliance.Catalog
+	attackMatrix  *threatintel.AttackMatrix
+	shodanClient  *threatintel.ShodanClient
+	nvdClient     *threatintel.NVDClient
 	httpServer    *http.Server
 }
 
 // NewServer creates a new API server.
-func NewServer(gs *graph.GraphService, pe *policy.Engine, se *scoring.Engine, ss *settings.FileStore, cat *compliance.Catalog) *Server {
+func NewServer(gs *graph.GraphService, pe *policy.Engine, se *scoring.Engine, ss *settings.FileStore, cat *compliance.Catalog, am *threatintel.AttackMatrix) *Server {
 	s := &Server{
 		graphService:  gs,
 		policyEngine:  pe,
 		scoringEngine: se,
 		settingsStore: ss,
 		catalog:       cat,
+		attackMatrix:  am,
+		shodanClient:  threatintel.NewShodanClient(),
+		nvdClient:     threatintel.NewNVDClient(),
 	}
 	return s
 }
@@ -78,6 +84,14 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/compliance/frameworks/{id}/controls/{controlId}/findings", s.handleControlFindings)
 	mux.HandleFunc("GET /api/v1/compliance/summary", s.handleComplianceSummary)
 
+	// Threat intelligence
+	mux.HandleFunc("GET /api/v1/threatintel/overview", s.handleThreatIntelOverview)
+	mux.HandleFunc("GET /api/v1/threatintel/kev", s.handleKEVFindings)
+	mux.HandleFunc("GET /api/v1/threatintel/epss", s.handleEPSSFindings)
+	mux.HandleFunc("GET /api/v1/threatintel/attack-matrix", s.handleAttackMatrix)
+	mux.HandleFunc("GET /api/v1/threatintel/cves", s.handleCVEInventory)
+	mux.HandleFunc("GET /api/v1/threatintel/exposure", s.handleExposure)
+
 	// Settings / connector configuration
 	mux.HandleFunc("GET /api/v1/settings/connectors", s.handleGetConnectors)
 	mux.HandleFunc("PUT /api/v1/settings/connectors", s.handleUpdateConnectors)
@@ -98,22 +112,10 @@ func (s *Server) handleListFindings(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	query := fmt.Sprintf("MATCH (f:Finding) RETURN f ORDER BY f.severity_id DESC LIMIT %d", limit)
-	rows, err := s.graphService.DB().QueryContext(r.Context(),
-		fmt.Sprintf(`SELECT * FROM cypher('security_fabric', $$ %s $$) as (f agtype)`, query))
+	findings, err := s.graphService.QueryFindings(r.Context(), limit)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
-	}
-	defer rows.Close()
-
-	var findings []json.RawMessage
-	for rows.Next() {
-		var raw string
-		if err := rows.Scan(&raw); err != nil {
-			continue
-		}
-		findings = append(findings, json.RawMessage(raw))
 	}
 
 	writeJSON(w, http.StatusOK, map[string]interface{}{

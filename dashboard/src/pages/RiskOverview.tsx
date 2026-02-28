@@ -28,7 +28,7 @@ export default function RiskOverview() {
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) return <div className="p-8 text-gray-500">Loading...</div>
+  if (loading) return <div className="p-8 text-gray-500 dark:text-gray-400">Loading...</div>
 
   // Node type distribution for donut chart
   const nodeData = Object.entries(stats)
@@ -64,8 +64,8 @@ export default function RiskOverview() {
       {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {Object.entries(stats).map(([label, count]) => (
-          <div key={label} className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-500">{label}</p>
+          <div key={label} className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
             <p className="text-3xl font-bold">{count >= 0 ? count : 'N/A'}</p>
           </div>
         ))}
@@ -75,7 +75,7 @@ export default function RiskOverview() {
       {Object.keys(statusCounts).length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {Object.entries(statusCounts).map(([status, count]) => (
-            <div key={status} className="bg-white rounded-lg shadow p-4 flex items-center gap-3">
+            <div key={status} className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-4 flex items-center gap-3">
               <span className={`px-2 py-1 rounded text-xs font-medium ${statusColor(status)}`}>{status}</span>
               <span className="text-2xl font-bold">{count}</span>
             </div>
@@ -86,8 +86,8 @@ export default function RiskOverview() {
       {/* Charts row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Node type donut */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="text-sm font-semibold text-gray-600 mb-2">Node Distribution</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-4">
+          <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">Node Distribution</h3>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie data={nodeData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={2}>
@@ -102,8 +102,8 @@ export default function RiskOverview() {
         </div>
 
         {/* Severity bar chart */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="text-sm font-semibold text-gray-600 mb-2">Findings by Severity</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-4">
+          <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">Findings by Severity</h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={sevData} layout="vertical" margin={{ left: 80 }}>
               <XAxis type="number" allowDecimals={false} />
@@ -119,8 +119,8 @@ export default function RiskOverview() {
         </div>
 
         {/* Provider pie */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="text-sm font-semibold text-gray-600 mb-2">Findings by Provider</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-4">
+          <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">Findings by Provider</h3>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie data={provData} dataKey="value" nameKey="name" outerRadius={90} paddingAngle={2}>

@@ -6,6 +6,7 @@ import ToxicCombinations from './pages/ToxicCombinations'
 import FindingsList from './pages/FindingsList'
 import ConnectorHealth from './pages/ConnectorHealth'
 import Policies from './pages/Policies'
+import ThreatIntelligence from './pages/ThreatIntelligence'
 import Settings from './pages/Settings'
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
       <Routes>
         <Route path="/" element={<RiskOverview />} />
         <Route path="/compliance" element={<CompliancePosture />} />
+        <Route path="/threat-intel" element={<ThreatIntelligence />} />
         <Route path="/toxic-combinations" element={<ToxicCombinations />} />
         <Route path="/findings" element={<FindingsList />} />
         <Route path="/connectors" element={<ConnectorHealth />} />

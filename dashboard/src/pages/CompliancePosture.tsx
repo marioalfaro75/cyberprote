@@ -35,7 +35,7 @@ export default function CompliancePosturePage() {
   }, [selectedFw])
 
   if (loading && !posture) {
-    return <div className="text-gray-500">Loading compliance data...</div>
+    return <div className="text-gray-500 dark:text-gray-400">Loading compliance data...</div>
   }
 
   if (error) {
@@ -68,7 +68,7 @@ export default function CompliancePosturePage() {
             className={`px-4 py-2 rounded-t font-medium text-sm ${
               selectedFw === fw.id
                 ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
             }`}
           >
             {fw.name} {fw.version}
@@ -79,12 +79,12 @@ export default function CompliancePosturePage() {
       {posture && (
         <>
           {/* Score gauge */}
-          <div className="bg-white rounded-lg shadow p-6 mb-6 flex items-center space-x-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-6 mb-6 flex items-center space-x-8">
             <div className="text-center">
               <div className={`text-5xl font-bold ${scoreColor}`}>
                 {score < 0 ? 'N/A' : `${Math.round(score)}%`}
               </div>
-              <div className="text-gray-500 text-sm mt-1">Compliance Score</div>
+              <div className="text-gray-500 dark:text-gray-400 text-sm mt-1">Compliance Score</div>
             </div>
             <div className="flex space-x-6">
               <StatBadge label="Pass" value={posture.status.pass} color="bg-green-100 text-green-800" />
@@ -95,7 +95,7 @@ export default function CompliancePosturePage() {
 
           {/* Category bar chart */}
           {categoryData.length > 0 && (
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-6 mb-6">
               <h2 className="text-lg font-semibold mb-4">Category Compliance</h2>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={categoryData} layout="vertical" margin={{ left: 60 }}>
@@ -113,28 +113,28 @@ export default function CompliancePosturePage() {
           {/* Function / category / control drilldown */}
           <div className="space-y-4">
             {posture.functions.map((fn) => (
-              <div key={fn.id} className="bg-white rounded-lg shadow">
-                <div className="p-4 border-b">
+              <div key={fn.id} className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50">
+                <div className="p-4 border-b dark:border-gray-700">
                   <h2 className="text-lg font-semibold">
                     {fn.id} — {fn.name}
                   </h2>
                   <div className="flex space-x-4 text-sm mt-1">
                     <span className="text-green-700">{fn.status.pass} pass</span>
                     <span className="text-red-700">{fn.status.fail} fail</span>
-                    <span className="text-gray-500">{fn.status.unknown} unknown</span>
+                    <span className="text-gray-500 dark:text-gray-400">{fn.status.unknown} unknown</span>
                   </div>
                 </div>
                 {fn.categories.map((cat) => (
-                  <div key={cat.id} className="border-b last:border-b-0">
-                    <div className="px-4 py-3 bg-gray-50">
+                  <div key={cat.id} className="border-b last:border-b-0 dark:border-gray-700">
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700">
                       <span className="font-medium text-sm">{cat.id} — {cat.name}</span>
-                      <span className="text-xs text-gray-500 ml-4">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-4">
                         {cat.status.pass}P / {cat.status.fail}F / {cat.status.unknown}U
                       </span>
                     </div>
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="text-left text-gray-500 text-xs">
+                        <tr className="text-left text-gray-500 dark:text-gray-400 text-xs">
                           <th className="px-4 py-2 w-32">Control</th>
                           <th className="px-4 py-2">Name</th>
                           <th className="px-4 py-2 w-20 text-center">Pass</th>
@@ -193,14 +193,14 @@ function ControlRow({
   return (
     <>
       <tr
-        className={`border-t hover:bg-gray-50 ${hasFindings ? 'cursor-pointer' : ''}`}
+        className={`border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 ${hasFindings ? 'cursor-pointer' : ''}`}
         onClick={hasFindings ? onToggle : undefined}
       >
         <td className="px-4 py-2 font-mono text-xs">{ctrl.id}</td>
         <td className="px-4 py-2">
           {ctrl.name}
           {hasFindings && (
-            <span className="ml-2 text-gray-400 text-xs">{expanded ? '▼' : '▶'}</span>
+            <span className="ml-2 text-gray-400 dark:text-gray-500 text-xs">{expanded ? '▼' : '▶'}</span>
           )}
         </td>
         <td className="px-4 py-2 text-center">
@@ -221,8 +221,8 @@ function ControlRow({
       </tr>
       {expanded && ctrl.findings && (
         <tr>
-          <td colSpan={5} className="bg-gray-50 px-6 py-3">
-            <div className="text-xs font-medium text-gray-500 mb-2">Findings ({ctrl.findings.length})</div>
+          <td colSpan={5} className="bg-gray-50 dark:bg-gray-900 px-6 py-3">
+            <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Findings ({ctrl.findings.length})</div>
             <div className="space-y-1">
               {ctrl.findings.map((f) => (
                 <div key={f.uid} className="flex items-center space-x-3 text-xs">
@@ -230,8 +230,8 @@ function ControlRow({
                     S{f.severity_id}
                   </span>
                   <ComplianceBadge status={f.compliance_status} />
-                  <span className="text-gray-600 truncate flex-1" title={f.title}>{f.title}</span>
-                  <span className="text-gray-400">{f.provider}</span>
+                  <span className="text-gray-600 dark:text-gray-400 truncate flex-1" title={f.title}>{f.title}</span>
+                  <span className="text-gray-400 dark:text-gray-500">{f.provider}</span>
                 </div>
               ))}
             </div>

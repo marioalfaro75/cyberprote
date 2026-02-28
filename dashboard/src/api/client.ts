@@ -1,5 +1,6 @@
 import type { ProviderSettings, SaveResult, TestConnectionResult, ApplyResult } from './settings-types'
 import type { FrameworkInfo, FrameworkPosture, FrameworkSummary, ControlPosture, FindingRef } from './compliance-types'
+import type { ThreatIntelOverview, VulnFinding, AttackCoverage, CVEEntry, ExposedResource } from './threatintel-types'
 
 const BASE_URL = '/api/v1'
 
@@ -54,4 +55,13 @@ export const api = {
     }),
   applySettings: () =>
     fetchJSON<ApplyResult>('/settings/apply', { method: 'POST' }),
+
+  // Threat intelligence
+  getThreatIntelOverview: () => fetchJSON<ThreatIntelOverview>('/threatintel/overview'),
+  getKEVFindings: () => fetchJSON<{ findings: VulnFinding[]; count: number }>('/threatintel/kev'),
+  getEPSSFindings: (threshold = 0.5) =>
+    fetchJSON<{ findings: VulnFinding[]; count: number; threshold: number }>(`/threatintel/epss?threshold=${threshold}`),
+  getAttackMatrix: () => fetchJSON<AttackCoverage>('/threatintel/attack-matrix'),
+  getCVEInventory: () => fetchJSON<{ cves: CVEEntry[]; count: number }>('/threatintel/cves'),
+  getExposure: () => fetchJSON<{ resources: ExposedResource[]; count: number }>('/threatintel/exposure'),
 }

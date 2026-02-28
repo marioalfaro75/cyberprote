@@ -13,19 +13,19 @@ export default function GitHubForm({ config, onChange }: GitHubFormProps) {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Owner (org or user)</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Owner (org or user)</label>
         <input
           type="text"
           value={config.owner}
           onChange={(e) => update({ owner: e.target.value })}
           placeholder="my-org"
-          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Repositories <span className="text-gray-400 font-normal">(comma-separated, empty = all)</span>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Repositories <span className="text-gray-400 dark:text-gray-500 font-normal">(comma-separated, empty = all)</span>
         </label>
         <input
           type="text"
@@ -34,12 +34,12 @@ export default function GitHubForm({ config, onChange }: GitHubFormProps) {
             update({ repos: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })
           }
           placeholder="repo1, repo2"
-          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Authentication Method</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Authentication Method</label>
         <div className="flex gap-4">
           <label className="inline-flex items-center gap-1 text-sm">
             <input
@@ -80,21 +80,21 @@ export default function GitHubForm({ config, onChange }: GitHubFormProps) {
         <>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">App ID</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">App ID</label>
               <input
                 type="number"
                 value={config.app_id || ''}
                 onChange={(e) => update({ app_id: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Installation ID</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Installation ID</label>
               <input
                 type="number"
                 value={config.app_installation_id || ''}
                 onChange={(e) => update({ app_installation_id: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
               />
             </div>
           </div>
@@ -112,18 +112,18 @@ export default function GitHubForm({ config, onChange }: GitHubFormProps) {
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Poll Interval</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Poll Interval</label>
         <input
           type="text"
           value={config.poll_interval}
           onChange={(e) => update({ poll_interval: e.target.value })}
           placeholder="5m"
-          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Scanning Features</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Scanning Features</label>
         <div className="flex flex-wrap gap-4">
           <label className="inline-flex items-center gap-1 text-sm">
             <input
@@ -156,15 +156,15 @@ export default function GitHubForm({ config, onChange }: GitHubFormProps) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          API URL <span className="text-gray-400 font-normal">(GitHub Enterprise only)</span>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          API URL <span className="text-gray-400 dark:text-gray-500 font-normal">(GitHub Enterprise only)</span>
         </label>
         <input
           type="text"
           value={config.api_url}
           onChange={(e) => update({ api_url: e.target.value })}
           placeholder="https://github.example.com/api/v3"
-          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
         />
       </div>
     </div>

@@ -108,14 +108,14 @@ export default function Policies() {
                       <span className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold ${style.bg} ${style.text}`}>
                         {style.icon}
                       </span>
-                      <span className="text-sm font-medium text-gray-600 uppercase">{formatSnakeCase(decision)}</span>
-                      <span className="text-xs text-gray-400">({pols.length})</span>
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase">{formatSnakeCase(decision)}</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">({pols.length})</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {pols.map((p) => (
                         <div key={p} className={`px-3 py-2 rounded-lg border ${style.bg} border-opacity-50`}>
                           <p className={`text-sm font-medium ${style.text}`}>{formatSnakeCase(p)}</p>
-                          <p className="text-xs text-gray-400 font-mono">{p}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 font-mono">{p}</p>
                         </div>
                       ))}
                     </div>
@@ -124,18 +124,18 @@ export default function Policies() {
               })}
             </div>
           ) : (
-            <p className="text-gray-400 text-sm">No policies loaded</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm">No policies loaded</p>
           )}
         </div>
 
         {/* Right column: bulk eval + test panel */}
         <div className="space-y-6">
           {/* Bulk evaluation summary */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-4">
             <h3 className="font-semibold mb-2 text-sm">Bulk Evaluation Summary</h3>
-            <p className="text-xs text-gray-500 mb-3">Sample of findings evaluated against policies</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Sample of findings evaluated against policies</p>
             {loadingBulk ? (
-              <p className="text-gray-400 text-sm">Evaluating...</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm">Evaluating...</p>
             ) : pieData.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
@@ -149,17 +149,17 @@ export default function Policies() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-gray-400 text-sm">No evaluation data</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm">No evaluation data</p>
             )}
           </div>
 
           {/* Test panel */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-4">
             <h3 className="font-semibold mb-2 text-sm">Test Policy</h3>
             <textarea
               value={testInput}
               onChange={(e) => setTestInput(e.target.value)}
-              className="w-full h-32 border rounded p-2 font-mono text-sm"
+              className="w-full h-32 border dark:border-gray-700 rounded p-2 font-mono text-sm bg-white dark:bg-gray-900 dark:text-gray-100"
             />
             <button onClick={handleEvaluate} className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
               Evaluate
@@ -173,7 +173,7 @@ export default function Policies() {
                   </span>
                 </div>
                 {evalResult.reasons?.length > 0 && (
-                  <ul className="mt-2 text-xs text-gray-600 space-y-1">
+                  <ul className="mt-2 text-xs text-gray-600 dark:text-gray-400 space-y-1">
                     {evalResult.reasons.map((r, i) => <li key={i}>- {r}</li>)}
                   </ul>
                 )}

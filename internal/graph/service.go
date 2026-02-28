@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -79,22 +80,92 @@ func (gs *GraphService) DB() *sql.DB {
 }
 
 // execCypher runs a Cypher query against the graph via AGE's cypher() function.
+// It acquires a single connection to ensure LOAD 'age' and the Cypher query
+// share the same session.
 func (gs *GraphService) execCypher(ctx context.Context, query string) error {
+	conn, err := gs.db.Conn(ctx)
+	if err != nil {
+		return fmt.Errorf("acquire conn: %w", err)
+	}
+	defer conn.Close()
+	if _, err := conn.ExecContext(ctx, "LOAD 'age'"); err != nil {
+		return fmt.Errorf("load age: %w", err)
+	}
+	if _, err := conn.ExecContext(ctx, `SET search_path = ag_catalog, "$user", public`); err != nil {
+		return fmt.Errorf("set search_path: %w", err)
+	}
 	stmt := fmt.Sprintf(
 		`SELECT * FROM cypher('%s', $$ %s $$) as (result agtype)`,
 		gs.graphName, query,
 	)
-	_, err := gs.db.ExecContext(ctx, stmt)
+	_, err = conn.ExecContext(ctx, stmt)
 	return err
 }
 
-// queryCypher runs a Cypher query and returns rows.
-func (gs *GraphService) queryCypher(ctx context.Context, query string, returnCols string) (*sql.Rows, error) {
+// queryCypherCollect runs a Cypher query on a dedicated connection (with AGE loaded)
+// and collects all row data as raw strings before returning. This avoids issues
+// with connection pooling and multi-statement queries.
+func (gs *GraphService) queryCypherCollect(ctx context.Context, query string, returnCols string, numCols int) ([][]string, error) {
+	conn, err := gs.db.Conn(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("acquire conn: %w", err)
+	}
+	defer conn.Close()
+	if _, err := conn.ExecContext(ctx, "LOAD 'age'"); err != nil {
+		return nil, fmt.Errorf("load age: %w", err)
+	}
+	if _, err := conn.ExecContext(ctx, `SET search_path = ag_catalog, "$user", public`); err != nil {
+		return nil, fmt.Errorf("set search_path: %w", err)
+	}
 	stmt := fmt.Sprintf(
 		`SELECT * FROM cypher('%s', $$ %s $$) as (%s)`,
 		gs.graphName, query, returnCols,
 	)
-	return gs.db.QueryContext(ctx, stmt)
+	rows, err := conn.QueryContext(ctx, stmt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results [][]string
+	for rows.Next() {
+		cols := make([]string, numCols)
+		ptrs := make([]interface{}, numCols)
+		for i := range cols {
+			ptrs[i] = &cols[i]
+		}
+		if err := rows.Scan(ptrs...); err != nil {
+			return nil, err
+		}
+		results = append(results, cols)
+	}
+	return results, rows.Err()
+}
+
+// queryCypher is a convenience wrapper for single-column Cypher queries.
+func (gs *GraphService) queryCypher(ctx context.Context, query string, returnCols string) ([]string, error) {
+	collected, err := gs.queryCypherCollect(ctx, query, returnCols, 1)
+	if err != nil {
+		return nil, err
+	}
+	results := make([]string, len(collected))
+	for i, row := range collected {
+		results[i] = row[0]
+	}
+	return results, nil
+}
+
+// queryCypher2 is a convenience wrapper for two-column Cypher queries.
+func (gs *GraphService) queryCypher2(ctx context.Context, query string, returnCols string) ([][2]string, error) {
+	collected, err := gs.queryCypherCollect(ctx, query, returnCols, 2)
+	if err != nil {
+		return nil, err
+	}
+	results := make([][2]string, len(collected))
+	for i, row := range collected {
+		results[i] = [2]string{row[0], row[1]}
+	}
+	return results, nil
 }
 
 // propsJSON converts a map to an AGE-compatible Cypher map literal string.
@@ -144,9 +215,11 @@ func (gs *GraphService) UpsertResource(ctx context.Context, uid, resourceType, n
 
 // FindingExtra holds optional additional properties for a Finding node.
 type FindingExtra struct {
-	ComplianceStatus   string
-	ComplianceControl  string
+	ComplianceStatus    string
+	ComplianceControl   string
 	ComplianceStandards string // comma-separated
+	AttackTechniques    string // comma-separated technique UIDs
+	AttackTactics       string // comma-separated tactic UIDs
 }
 
 // UpsertFinding creates or updates a Finding node.
@@ -176,6 +249,12 @@ func (gs *GraphService) UpsertFindingWithExtra(ctx context.Context, uid string, 
 		if extra.ComplianceStandards != "" {
 			props["compliance_standards"] = extra.ComplianceStandards
 		}
+		if extra.AttackTechniques != "" {
+			props["attack_techniques"] = extra.AttackTechniques
+		}
+		if extra.AttackTactics != "" {
+			props["attack_tactics"] = extra.AttackTactics
+		}
 	}
 	query := fmt.Sprintf(
 		`MERGE (f:Finding {uid: '%s'}) SET f = %s`,
@@ -185,13 +264,15 @@ func (gs *GraphService) UpsertFindingWithExtra(ctx context.Context, uid string, 
 }
 
 // UpsertVulnerability creates or updates a Vulnerability node.
-func (gs *GraphService) UpsertVulnerability(ctx context.Context, uid, title, severity string, cvssScore float64) error {
+func (gs *GraphService) UpsertVulnerability(ctx context.Context, uid, title, severity string, cvssScore float64, epssScore float64, isExploited bool) error {
 	props := map[string]interface{}{
-		"uid":        uid,
-		"title":      title,
-		"severity":   severity,
-		"cvss_score": cvssScore,
-		"updated_at": time.Now().Unix(),
+		"uid":          uid,
+		"title":        title,
+		"severity":     severity,
+		"cvss_score":   cvssScore,
+		"epss_score":   epssScore,
+		"is_exploited": isExploited,
+		"updated_at":   time.Now().Unix(),
 	}
 	query := fmt.Sprintf(
 		`MERGE (v:Vulnerability {uid: '%s'}) SET v = %s`,
@@ -290,18 +371,13 @@ func (gs *GraphService) QueryToxicCombinations(ctx context.Context, queryName st
 		return nil, fmt.Errorf("unknown toxic combination query: %s", queryName)
 	}
 
-	rows, err := gs.queryCypher(ctx, query, "result agtype")
+	rawRows, err := gs.queryCypher(ctx, query, "result agtype")
 	if err != nil {
 		return nil, fmt.Errorf("query toxic combination %s: %w", queryName, err)
 	}
-	defer rows.Close()
 
 	var results []map[string]interface{}
-	for rows.Next() {
-		var raw string
-		if err := rows.Scan(&raw); err != nil {
-			return nil, err
-		}
+	for _, raw := range rawRows {
 		var m map[string]interface{}
 		if err := json.Unmarshal([]byte(raw), &m); err != nil {
 			results = append(results, map[string]interface{}{"raw": raw})
@@ -309,7 +385,24 @@ func (gs *GraphService) QueryToxicCombinations(ctx context.Context, queryName st
 			results = append(results, m)
 		}
 	}
-	return results, rows.Err()
+	return results, nil
+}
+
+// QueryFindings returns all findings ordered by severity, up to the given limit.
+func (gs *GraphService) QueryFindings(ctx context.Context, limit int) ([]map[string]interface{}, error) {
+	query := fmt.Sprintf("MATCH (f:Finding) RETURN f ORDER BY f.severity_id DESC LIMIT %d", limit)
+	rawRows, err := gs.queryCypher(ctx, query, "f agtype")
+	if err != nil {
+		return nil, fmt.Errorf("query findings: %w", err)
+	}
+	var results []map[string]interface{}
+	for _, raw := range rawRows {
+		props := extractVertexProperties(raw)
+		if props != nil {
+			results = append(results, props)
+		}
+	}
+	return results, nil
 }
 
 // ComplianceFindingRow represents a compliance finding returned from a graph query.
@@ -327,18 +420,13 @@ type ComplianceFindingRow struct {
 // QueryComplianceFindings returns all findings that have compliance metadata.
 func (gs *GraphService) QueryComplianceFindings(ctx context.Context) ([]ComplianceFindingRow, error) {
 	query := `MATCH (f:Finding) WHERE f.compliance_control IS NOT NULL RETURN f`
-	rows, err := gs.queryCypher(ctx, query, "f agtype")
+	rawRows, err := gs.queryCypher(ctx, query, "f agtype")
 	if err != nil {
 		return nil, fmt.Errorf("query compliance findings: %w", err)
 	}
-	defer rows.Close()
 
 	var results []ComplianceFindingRow
-	for rows.Next() {
-		var raw string
-		if err := rows.Scan(&raw); err != nil {
-			return nil, err
-		}
+	for _, raw := range rawRows {
 		props := extractVertexProperties(raw)
 		if props == nil {
 			continue
@@ -370,7 +458,7 @@ func (gs *GraphService) QueryComplianceFindings(ctx context.Context) ([]Complian
 		}
 		results = append(results, row)
 	}
-	return results, rows.Err()
+	return results, nil
 }
 
 // extractVertexProperties parses an AGE vertex string (e.g., `{...}::vertex`)
@@ -399,18 +487,196 @@ func extractVertexProperties(raw string) map[string]interface{} {
 // CountNodes returns the total number of nodes with a given label.
 func (gs *GraphService) CountNodes(ctx context.Context, label string) (int64, error) {
 	query := fmt.Sprintf("MATCH (n:%s) RETURN count(n)", label)
-	rows, err := gs.queryCypher(ctx, query, "cnt agtype")
+	rawRows, err := gs.queryCypher(ctx, query, "cnt agtype")
 	if err != nil {
 		return 0, err
 	}
-	defer rows.Close()
-
-	if rows.Next() {
-		var cnt int64
-		if err := rows.Scan(&cnt); err != nil {
-			return 0, err
-		}
-		return cnt, nil
+	if len(rawRows) == 0 {
+		return 0, nil
 	}
-	return 0, nil
+	var cnt int64
+	if err := json.Unmarshal([]byte(rawRows[0]), &cnt); err != nil {
+		// Try parsing as string
+		s := strings.TrimSpace(rawRows[0])
+		if n, err2 := strconv.ParseInt(s, 10, 64); err2 == nil {
+			return n, nil
+		}
+		return 0, fmt.Errorf("parse count: %w", err)
+	}
+	return cnt, nil
+}
+
+// VulnerabilityFindingRow represents a finding joined with its vulnerability data.
+type VulnerabilityFindingRow struct {
+	FindingUID   string  `json:"finding_uid"`
+	FindingTitle string  `json:"finding_title"`
+	SeverityID   int32   `json:"severity_id"`
+	Status       string  `json:"status"`
+	Provider     string  `json:"provider"`
+	VulnUID      string  `json:"vuln_uid"`
+	VulnTitle    string  `json:"vuln_title"`
+	VulnSeverity string  `json:"vuln_severity"`
+	CVSSScore    float64 `json:"cvss_score"`
+	EPSSScore    float64 `json:"epss_score"`
+	IsExploited  bool    `json:"is_exploited"`
+}
+
+// QueryVulnerabilityFindings returns all findings linked to vulnerabilities via EXPLOITS edges.
+func (gs *GraphService) QueryVulnerabilityFindings(ctx context.Context) ([]VulnerabilityFindingRow, error) {
+	query := `MATCH (f:Finding)-[:EXPLOITS]->(v:Vulnerability) RETURN f, v`
+	rawRows, err := gs.queryCypher2(ctx, query, "f agtype, v agtype")
+	if err != nil {
+		return nil, fmt.Errorf("query vulnerability findings: %w", err)
+	}
+
+	var results []VulnerabilityFindingRow
+	for _, pair := range rawRows {
+		fProps := extractVertexProperties(pair[0])
+		vProps := extractVertexProperties(pair[1])
+		if fProps == nil || vProps == nil {
+			continue
+		}
+		row := VulnerabilityFindingRow{}
+		if v, ok := fProps["uid"].(string); ok {
+			row.FindingUID = v
+		}
+		if v, ok := fProps["title"].(string); ok {
+			row.FindingTitle = v
+		}
+		if v, ok := fProps["severity_id"].(float64); ok {
+			row.SeverityID = int32(v)
+		}
+		if v, ok := fProps["status"].(string); ok {
+			row.Status = v
+		}
+		if v, ok := fProps["provider"].(string); ok {
+			row.Provider = v
+		}
+		if v, ok := vProps["uid"].(string); ok {
+			row.VulnUID = v
+		}
+		if v, ok := vProps["title"].(string); ok {
+			row.VulnTitle = v
+		}
+		if v, ok := vProps["severity"].(string); ok {
+			row.VulnSeverity = v
+		}
+		if v, ok := vProps["cvss_score"].(float64); ok {
+			row.CVSSScore = v
+		}
+		if v, ok := vProps["epss_score"].(float64); ok {
+			row.EPSSScore = v
+		}
+		if v, ok := vProps["is_exploited"].(bool); ok {
+			row.IsExploited = v
+		}
+		results = append(results, row)
+	}
+	return results, nil
+}
+
+// AttackFindingRow represents a finding that has ATT&CK technique/tactic data.
+type AttackFindingRow struct {
+	UID              string `json:"uid"`
+	Title            string `json:"title"`
+	SeverityID       int32  `json:"severity_id"`
+	Status           string `json:"status"`
+	Provider         string `json:"provider"`
+	AttackTechniques string `json:"attack_techniques"`
+	AttackTactics    string `json:"attack_tactics"`
+}
+
+// QueryFindingsWithAttacks returns all findings that have ATT&CK technique annotations.
+func (gs *GraphService) QueryFindingsWithAttacks(ctx context.Context) ([]AttackFindingRow, error) {
+	query := `MATCH (f:Finding) WHERE f.attack_techniques IS NOT NULL RETURN f`
+	rawRows, err := gs.queryCypher(ctx, query, "f agtype")
+	if err != nil {
+		return nil, fmt.Errorf("query findings with attacks: %w", err)
+	}
+
+	var results []AttackFindingRow
+	for _, raw := range rawRows {
+		props := extractVertexProperties(raw)
+		if props == nil {
+			continue
+		}
+		row := AttackFindingRow{}
+		if v, ok := props["uid"].(string); ok {
+			row.UID = v
+		}
+		if v, ok := props["title"].(string); ok {
+			row.Title = v
+		}
+		if v, ok := props["severity_id"].(float64); ok {
+			row.SeverityID = int32(v)
+		}
+		if v, ok := props["status"].(string); ok {
+			row.Status = v
+		}
+		if v, ok := props["provider"].(string); ok {
+			row.Provider = v
+		}
+		if v, ok := props["attack_techniques"].(string); ok {
+			row.AttackTechniques = v
+		}
+		if v, ok := props["attack_tactics"].(string); ok {
+			row.AttackTactics = v
+		}
+		results = append(results, row)
+	}
+	return results, nil
+}
+
+// ExposedResourceRow represents a resource exposed through a public network path.
+type ExposedResourceRow struct {
+	ResourceUID  string `json:"resource_uid"`
+	ResourceType string `json:"resource_type"`
+	ResourceName string `json:"resource_name"`
+	Provider     string `json:"provider"`
+	Endpoint     string `json:"endpoint"`
+	Protocol     string `json:"protocol"`
+	Port         int    `json:"port"`
+	IsPublic     bool   `json:"is_public"`
+}
+
+// QueryExposedResources returns resources linked to public network paths via EXPOSES edges.
+func (gs *GraphService) QueryExposedResources(ctx context.Context) ([]ExposedResourceRow, error) {
+	query := `MATCH (r:Resource)-[:EXPOSES]->(n:NetworkPath {is_public: true}) RETURN r, n`
+	rawRows, err := gs.queryCypher2(ctx, query, "r agtype, n agtype")
+	if err != nil {
+		return nil, fmt.Errorf("query exposed resources: %w", err)
+	}
+
+	var results []ExposedResourceRow
+	for _, pair := range rawRows {
+		rProps := extractVertexProperties(pair[0])
+		nProps := extractVertexProperties(pair[1])
+		if rProps == nil || nProps == nil {
+			continue
+		}
+		row := ExposedResourceRow{IsPublic: true}
+		if v, ok := rProps["uid"].(string); ok {
+			row.ResourceUID = v
+		}
+		if v, ok := rProps["type"].(string); ok {
+			row.ResourceType = v
+		}
+		if v, ok := rProps["name"].(string); ok {
+			row.ResourceName = v
+		}
+		if v, ok := rProps["provider"].(string); ok {
+			row.Provider = v
+		}
+		if v, ok := nProps["endpoint"].(string); ok {
+			row.Endpoint = v
+		}
+		if v, ok := nProps["protocol"].(string); ok {
+			row.Protocol = v
+		}
+		if v, ok := nProps["port"].(float64); ok {
+			row.Port = int(v)
+		}
+		results = append(results, row)
+	}
+	return results, nil
 }

@@ -80,6 +80,14 @@ func processVulnerabilityFinding(ctx context.Context, gs *graph.GraphService, f 
 		if vuln.CVE != nil && len(vuln.CVE.CVSS) > 0 {
 			cvssScore = vuln.CVE.CVSS[0].BaseScore
 		}
+		epssScore := 0.0
+		if vuln.CVE != nil && vuln.CVE.EPSSScore != nil {
+			epssScore = *vuln.CVE.EPSSScore
+		}
+		isExploited := false
+		if vuln.CVE != nil && vuln.CVE.IsExploited != nil {
+			isExploited = *vuln.CVE.IsExploited
+		}
 		vulnUID := vuln.UID
 		if vulnUID == "" && vuln.CVE != nil {
 			vulnUID = vuln.CVE.UID
@@ -87,7 +95,7 @@ func processVulnerabilityFinding(ctx context.Context, gs *graph.GraphService, f 
 		if vulnUID == "" {
 			continue
 		}
-		if err := gs.UpsertVulnerability(ctx, vulnUID, vuln.Title, vuln.Severity, cvssScore); err != nil {
+		if err := gs.UpsertVulnerability(ctx, vulnUID, vuln.Title, vuln.Severity, cvssScore, epssScore, isExploited); err != nil {
 			return err
 		}
 		if err := gs.CreateEdge(ctx, "Finding", findingUID, "Vulnerability", vulnUID, graph.EdgeEXPLOITS, nil); err != nil {
@@ -209,7 +217,24 @@ func processDetectionFinding(ctx context.Context, gs *graph.GraphService, f *ocs
 		provider = f.Cloud.Provider
 	}
 
-	if err := gs.UpsertFinding(ctx, findingUID, f.ClassUID, f.SeverityID, title, f.Message, provider, f.Status); err != nil {
+	var extra *graph.FindingExtra
+	if len(f.Attacks) > 0 {
+		var techniques, tactics []string
+		for _, a := range f.Attacks {
+			if a.Technique != nil && a.Technique.UID != "" {
+				techniques = append(techniques, a.Technique.UID)
+			}
+			if a.Tactic != nil && a.Tactic.UID != "" {
+				tactics = append(tactics, a.Tactic.UID)
+			}
+		}
+		extra = &graph.FindingExtra{
+			AttackTechniques: strings.Join(techniques, ","),
+			AttackTactics:    strings.Join(tactics, ","),
+		}
+	}
+
+	if err := gs.UpsertFindingWithExtra(ctx, findingUID, f.ClassUID, f.SeverityID, title, f.Message, provider, f.Status, extra); err != nil {
 		return err
 	}
 

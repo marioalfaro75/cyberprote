@@ -6,6 +6,13 @@
     <title>Cloud Security Fabric</title>
   </head>
   <body>
+    <script>
+      (function() {
+        var t = localStorage.getItem('csf-theme');
+        var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme:dark)').matches);
+        if (dark) document.documentElement.classList.add('dark');
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

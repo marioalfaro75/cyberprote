@@ -1,0 +1,42 @@
+package awssechubreceiver
+
+import (
+	"context"
+	"time"
+
+	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/consumer"
+	"go.opentelemetry.io/collector/receiver"
+)
+
+const typeStr = "awssechub"
+
+// NewFactory creates a factory for the AWS Security Hub receiver.
+func NewFactory() receiver.Factory {
+	return receiver.NewFactory(
+		component.MustNewType(typeStr),
+		createDefaultConfig,
+		receiver.WithLogs(createLogsReceiver, component.StabilityLevelAlpha),
+	)
+}
+
+func createDefaultConfig() component.Config {
+	return &Config{
+		Region:       "us-east-1",
+		PollInterval: 5 * time.Minute,
+		BatchSize:    100,
+	}
+}
+
+func createLogsReceiver(
+	ctx context.Context,
+	set receiver.Settings,
+	cfg component.Config,
+	nextConsumer consumer.Logs,
+) (receiver.Logs, error) {
+	rCfg := cfg.(*Config)
+	if err := rCfg.Validate(); err != nil {
+		return nil, err
+	}
+	return newSecHubReceiver(rCfg, set.Logger, nextConsumer)
+}

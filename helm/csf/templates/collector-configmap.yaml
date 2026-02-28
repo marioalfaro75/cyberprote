@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "csf.fullname" . }}-collector-config
+  labels:
+    {{- include "csf.componentFullLabels" (dict "component" "collector" "context" .) | nindent 4 }}
+data:
+  collector-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:{{ .Values.collector.ports.otlpGrpc }}
+          http:
+            endpoint: 0.0.0.0:{{ .Values.collector.ports.otlpHttp }}
+
+    processors:
+      batch:
+        send_batch_size: 256
+        timeout: 5s
+
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 512
+        spike_limit_mib: 128
+
+      ocsftransform:
+        enrich_epss: false
+        enrich_kev: false
+        csf_extensions: true
+
+    exporters:
+      agegraph:
+        dsn: {{ include "csf.postgresqlDSN" . | quote }}
+        graph_name: {{ .Values.postgresql.credentials.graphName }}
+        batch_size: 100
+        flush_interval: 10s
+
+      debug:
+        verbosity: basic
+
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:{{ .Values.collector.ports.health }}
+
+      zpages:
+        endpoint: 0.0.0.0:{{ .Values.collector.ports.zpages }}
+
+    service:
+      extensions: [health_check, zpages]
+      pipelines:
+        logs/security:
+          receivers: [otlp]
+          processors: [memory_limiter, batch, ocsftransform]
+          exporters: [agegraph, debug]
+      telemetry:
+        logs:
+          level: info
+        metrics:
+          address: 0.0.0.0:{{ .Values.collector.ports.metrics }}

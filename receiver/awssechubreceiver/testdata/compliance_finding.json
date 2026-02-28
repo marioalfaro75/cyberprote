@@ -1,0 +1,39 @@
+{
+  "SchemaVersion": "2018-10-08",
+  "Id": "arn:aws:securityhub:us-east-1:123456789012:subscription/cis-aws-foundations-benchmark/v/1.4.0/2.1.1/finding/ghi789",
+  "ProductArn": "arn:aws:securityhub:us-east-1::product/aws/securityhub",
+  "ProductName": "Security Hub",
+  "CompanyName": "AWS",
+  "Region": "us-east-1",
+  "GeneratorId": "security-control/S3.4",
+  "AwsAccountId": "123456789012",
+  "Types": ["Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"],
+  "CreatedAt": "2025-01-14T08:00:00Z",
+  "UpdatedAt": "2025-01-15T08:00:00Z",
+  "Severity": {
+    "Label": "MEDIUM",
+    "Normalized": 40
+  },
+  "Title": "S3.4 S3 buckets should have server-side encryption enabled",
+  "Description": "This control checks whether S3 buckets have server-side encryption enabled",
+  "Compliance": {
+    "Status": "FAILED",
+    "SecurityControlId": "S3.4",
+    "AssociatedStandards": [
+      {
+        "StandardsId": "standards/cis-aws-foundations-benchmark/v/1.4.0"
+      }
+    ]
+  },
+  "Resources": [
+    {
+      "Type": "AwsS3Bucket",
+      "Id": "arn:aws:s3:::my-unencrypted-bucket",
+      "Region": "us-east-1"
+    }
+  ],
+  "Workflow": {
+    "Status": "NEW"
+  },
+  "RecordState": "ACTIVE"
+}

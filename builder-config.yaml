@@ -1,0 +1,32 @@
+# OpenTelemetry Collector Builder configuration
+# Used by `ocb` (OpenTelemetry Collector Builder) to produce a custom collector binary.
+
+dist:
+  name: csf-collector
+  description: Cloud Security Fabric Collector
+  output_path: ./build
+  otelcol_version: 0.120.0
+  module: github.com/cloud-security-fabric/csf/cmd/collector
+
+exporters:
+  - gomod: github.com/cloud-security-fabric/csf/exporter/agegraphexporter v0.0.0
+    path: ./exporter/agegraphexporter
+  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.120.0
+
+processors:
+  - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.120.0
+  - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.120.0
+  - gomod: github.com/cloud-security-fabric/csf/processor/ocsftransformprocessor v0.0.0
+    path: ./processor/ocsftransformprocessor
+
+receivers:
+  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.120.0
+  - gomod: github.com/cloud-security-fabric/csf/receiver/awssechubreceiver v0.0.0
+    path: ./receiver/awssechubreceiver
+  - gomod: github.com/cloud-security-fabric/csf/receiver/githubghasreceiver v0.0.0
+    path: ./receiver/githubghasreceiver
+
+extensions:
+  - gomod: go.opentelemetry.io/collector/extension/zpagesextension v0.120.0
+
+connectors: []

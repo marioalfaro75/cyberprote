@@ -1,0 +1,48 @@
+{
+  "SchemaVersion": "2018-10-08",
+  "Id": "arn:aws:securityhub:us-east-1:123456789012:subscription/aws-foundational-security-best-practices/v/1.0.0/Lambda.1/finding/def456",
+  "ProductArn": "arn:aws:securityhub:us-east-1::product/aws/inspector",
+  "ProductName": "Inspector",
+  "CompanyName": "Amazon",
+  "Region": "us-east-1",
+  "GeneratorId": "inspector",
+  "AwsAccountId": "123456789012",
+  "Types": ["Software and Configuration Checks/Vulnerabilities/CVE"],
+  "CreatedAt": "2025-01-15T09:00:00Z",
+  "UpdatedAt": "2025-01-15T09:30:00Z",
+  "Severity": {
+    "Label": "CRITICAL",
+    "Normalized": 90
+  },
+  "Title": "CVE-2024-1234 - foo",
+  "Description": "Package foo 1.2.3 has a critical remote code execution vulnerability",
+  "Remediation": {
+    "Recommendation": {
+      "Text": "Update package foo to version 1.2.4 or later"
+    }
+  },
+  "Resources": [
+    {
+      "Type": "AwsLambdaFunction",
+      "Id": "arn:aws:lambda:us-east-1:123456789012:function:my-func",
+      "Region": "us-east-1"
+    }
+  ],
+  "Vulnerabilities": [
+    {
+      "Id": "CVE-2024-1234",
+      "Cvss": [
+        {
+          "Version": "3.1",
+          "BaseScore": 9.8
+        }
+      ],
+      "FixAvailable": "YES",
+      "VendorSeverity": "CRITICAL"
+    }
+  ],
+  "Workflow": {
+    "Status": "NEW"
+  },
+  "RecordState": "ACTIVE"
+}

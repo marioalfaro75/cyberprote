@@ -1,0 +1,40 @@
+name: overprivileged-iam-role
+description: Detect and restrict overprivileged IAM roles by scoping down permissions
+trigger:
+  class_uid: 2003
+  keywords: ["overprivileged", "excessive_permissions", "iam_role"]
+  finding_type: overprivileged_iam_role
+steps:
+  - name: Snapshot current role policy
+    action: aws.iam.get_role_policy
+    parameters:
+      role_name: "{{.resource_name}}"
+    on_failure: halt
+    dry_run_safe: true
+  - name: Apply least-privilege policy
+    action: aws.iam.put_role_policy
+    parameters:
+      role_name: "{{.resource_name}}"
+      policy_document: "{{.recommended_policy}}"
+    on_failure: halt
+    dry_run_safe: false
+  - name: Notify security team
+    action: notify.slack
+    parameters:
+      channel: "#security-incidents"
+      message: "Overprivileged IAM role restricted: {{.resource_name}} ({{.finding_uid}})"
+    on_failure: continue
+    dry_run_safe: true
+  - name: Create review ticket
+    action: ticketing.create
+    parameters:
+      title: "Review restricted IAM role: {{.resource_name}}"
+      description: "Role {{.resource_name}} was automatically scoped down. Please review the applied policy."
+      priority: high
+      assignee: "{{.resource_owner}}"
+    on_failure: continue
+    dry_run_safe: true
+approval:
+  required: true
+  approvers: ["security-team", "iam-admins"]
+  timeout: "30m"

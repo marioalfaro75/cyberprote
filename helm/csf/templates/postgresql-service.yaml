@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "csf.fullname" . }}-postgresql
+  labels:
+    {{- include "csf.componentFullLabels" (dict "component" "postgresql" "context" .) | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: postgresql
+      port: {{ .Values.postgresql.port }}
+      targetPort: postgresql
+      protocol: TCP
+  selector:
+    {{- include "csf.componentLabels" (dict "component" "postgresql" "context" .) | nindent 4 }}

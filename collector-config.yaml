@@ -1,0 +1,71 @@
+# Cloud Security Fabric — Default Collector Pipeline Configuration
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # AWS Security Hub receiver (configure via env vars or .env)
+  # awssechub:
+  #   region: us-east-1
+  #   poll_interval: 5m
+  #   batch_size: 100
+  #   assume_role: ""  # Optional: arn:aws:iam::ACCOUNT:role/ROLE
+  #   filters:
+  #     severity_labels: [CRITICAL, HIGH]
+  #     record_state: ACTIVE
+
+  # GitHub GHAS receiver
+  # githubghas:
+  #   owner: your-org
+  #   repos: [repo1, repo2]
+  #   token: ${GITHUB_TOKEN}
+  #   poll_interval: 5m
+  #   enable_code_scanning: true
+  #   enable_dependabot: true
+  #   enable_secret_scanning: true
+
+processors:
+  batch:
+    send_batch_size: 256
+    timeout: 5s
+
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+  ocsftransform:
+    enrich_epss: false
+    enrich_kev: false
+    csf_extensions: true
+
+exporters:
+  agegraph:
+    dsn: "postgres://csf:csf-dev-password@localhost:5432/csf?sslmode=disable"
+    graph_name: security_fabric
+    batch_size: 100
+    flush_interval: 10s
+
+  debug:
+    verbosity: basic
+
+extensions:
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+service:
+  extensions: [zpages]
+  pipelines:
+    logs/security:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, ocsftransform]
+      exporters: [agegraph, debug]
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: 0.0.0.0:8888

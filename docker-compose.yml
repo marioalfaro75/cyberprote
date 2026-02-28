@@ -1,0 +1,34 @@
+services:
+  postgres-age:
+    image: apache/age:v1.5.0-pg16
+    container_name: csf-postgres
+    environment:
+      POSTGRES_USER: csf
+      POSTGRES_PASSWORD: csf-dev-password
+      POSTGRES_DB: csf
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./internal/graph/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U csf"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: csf-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafanadata:/var/lib/grafana
+    profiles:
+      - monitoring
+
+volumes:
+  pgdata:
+  grafanadata:

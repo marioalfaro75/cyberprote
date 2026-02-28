@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "csf.fullname" . }}-collector
+  labels:
+    {{- include "csf.componentFullLabels" (dict "component" "collector" "context" .) | nindent 4 }}
+spec:
+  replicas: {{ .Values.collector.replicas }}
+  selector:
+    matchLabels:
+      {{- include "csf.componentLabels" (dict "component" "collector" "context" .) | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/collector-configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "csf.componentLabels" (dict "component" "collector" "context" .) | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: collector
+          image: "{{ .Values.collector.image.repository }}:{{ .Values.collector.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          args:
+            - --config=/etc/csf/collector-config.yaml
+          ports:
+            - name: otlp-grpc
+              containerPort: {{ .Values.collector.ports.otlpGrpc }}
+              protocol: TCP
+            - name: otlp-http
+              containerPort: {{ .Values.collector.ports.otlpHttp }}
+              protocol: TCP
+            - name: health
+              containerPort: {{ .Values.collector.ports.health }}
+              protocol: TCP
+            - name: zpages
+              containerPort: {{ .Values.collector.ports.zpages }}
+              protocol: TCP
+            - name: metrics
+              containerPort: {{ .Values.collector.ports.metrics }}
+              protocol: TCP
+          {{- with .Values.collector.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.collector.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.collector.resources | nindent 12 }}
+          volumeMounts:
+            - name: collector-config
+              mountPath: /etc/csf
+              readOnly: true
+      volumes:
+        - name: collector-config
+          configMap:
+            name: {{ include "csf.fullname" . }}-collector-config
+      {{- with .Values.collector.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.collector.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.collector.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

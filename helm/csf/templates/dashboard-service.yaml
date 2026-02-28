@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "csf.fullname" . }}-dashboard
+  labels:
+    {{- include "csf.componentFullLabels" (dict "component" "dashboard" "context" .) | nindent 4 }}
+spec:
+  type: {{ .Values.dashboard.serviceType }}
+  ports:
+    - name: http
+      port: {{ .Values.dashboard.port }}
+      targetPort: http
+      protocol: TCP
+  selector:
+    {{- include "csf.componentLabels" (dict "component" "dashboard" "context" .) | nindent 4 }}

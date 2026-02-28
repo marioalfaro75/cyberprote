@@ -1,0 +1,37 @@
+name: leaked-aws-key
+description: Respond to a leaked AWS access key detected by secret scanning
+trigger:
+  class_uid: 2001
+  keywords: ["aws_access_key_id", "aws_secret_access_key"]
+  secret_type: aws_access_key_id
+steps:
+  - name: Disable the key
+    action: aws.iam.disable_access_key
+    parameters:
+      key_id: "{{.secret_value}}"
+    on_failure: halt
+    dry_run_safe: false
+  - name: Create new key
+    action: aws.iam.create_access_key
+    parameters:
+      user: "{{.resource_owner}}"
+    on_failure: continue
+    dry_run_safe: false
+  - name: Notify security team
+    action: notify.slack
+    parameters:
+      channel: "#security-incidents"
+      message: "AWS access key leaked and disabled: {{.finding_uid}}"
+    on_failure: continue
+    dry_run_safe: true
+  - name: Create Jira ticket
+    action: notify.jira
+    parameters:
+      project: SEC
+      summary: "Leaked AWS key: {{.finding_title}}"
+    on_failure: continue
+    dry_run_safe: true
+approval:
+  required: true
+  approvers: ["security-team"]
+  timeout: "15m"

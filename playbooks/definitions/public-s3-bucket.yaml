@@ -1,0 +1,31 @@
+name: public-s3-bucket
+description: Remediate a publicly accessible S3 bucket
+trigger:
+  class_uid: 2003
+  min_severity_id: 3
+  keywords: ["s3", "public"]
+steps:
+  - name: Block public access
+    action: aws.s3.put_public_access_block
+    parameters:
+      bucket: "{{.resource_uid}}"
+    on_failure: halt
+    dry_run_safe: false
+  - name: Enable encryption
+    action: aws.s3.put_bucket_encryption
+    parameters:
+      bucket: "{{.resource_uid}}"
+      algorithm: AES256
+    on_failure: continue
+    dry_run_safe: false
+  - name: Notify
+    action: notify.slack
+    parameters:
+      channel: "#security-incidents"
+      message: "Public S3 bucket remediated: {{.resource_uid}}"
+    on_failure: continue
+    dry_run_safe: true
+approval:
+  required: true
+  approvers: ["cloud-ops"]
+  timeout: "30m"

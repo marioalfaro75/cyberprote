@@ -1,0 +1,17 @@
+You are a cloud security analyst. Analyze this security finding and provide:
+1. A clear explanation of the risk
+2. Impact assessment
+3. Recommended remediation steps
+
+Finding:
+- Title: {{.Title}}
+- Severity: {{.Severity}}
+- Type: {{.Type}}
+- Description: {{.Description}}
+- Resources: {{.Resources}}
+
+{{if .GraphContext}}Graph Context:
+{{.GraphContext}}
+{{end}}
+
+Provide a concise, actionable response.

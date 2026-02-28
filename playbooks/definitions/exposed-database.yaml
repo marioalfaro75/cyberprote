@@ -1,0 +1,48 @@
+name: exposed-database
+description: Respond to an internet-exposed database by restricting its security group and notifying stakeholders
+trigger:
+  class_uid: 2002
+  keywords: ["database", "publicly_accessible", "security_group"]
+  finding_type: exposed_database
+steps:
+  - name: Identify attached security groups
+    action: aws.ec2.describe_security_groups
+    parameters:
+      resource_id: "{{.resource_uid}}"
+    on_failure: halt
+    dry_run_safe: true
+  - name: Revoke public ingress rules
+    action: aws.ec2.revoke_security_group_ingress
+    parameters:
+      group_id: "{{.security_group_id}}"
+      ip_protocol: "tcp"
+      cidr_ip: "0.0.0.0/0"
+      port_range: "{{.db_port}}"
+    on_failure: halt
+    dry_run_safe: false
+  - name: Disable public accessibility
+    action: aws.rds.modify_db_instance
+    parameters:
+      db_instance_id: "{{.resource_name}}"
+      publicly_accessible: false
+    on_failure: halt
+    dry_run_safe: false
+  - name: Notify security team
+    action: notify.slack
+    parameters:
+      channel: "#security-incidents"
+      message: "Exposed database remediated: {{.resource_name}} — public access revoked ({{.finding_uid}})"
+    on_failure: continue
+    dry_run_safe: true
+  - name: Notify database owner
+    action: notify.email
+    parameters:
+      to: "{{.resource_owner_email}}"
+      subject: "Action taken: database {{.resource_name}} public access removed"
+      body: "Your database {{.resource_name}} was found to be publicly accessible. Public ingress has been revoked. Please verify connectivity."
+    on_failure: continue
+    dry_run_safe: true
+approval:
+  required: true
+  approvers: ["security-team", "database-admins"]
+  timeout: "10m"

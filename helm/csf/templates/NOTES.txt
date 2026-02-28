@@ -1,0 +1,39 @@
+Cloud Security Fabric has been deployed!
+
+Components:
+  - Collector (OTel):  {{ include "csf.fullname" . }}-collector
+  - API Server:        {{ include "csf.fullname" . }}-api
+  - Dashboard:         {{ include "csf.fullname" . }}-dashboard
+  - PostgreSQL + AGE:  {{ include "csf.fullname" . }}-postgresql
+
+---
+
+1. Access the Dashboard:
+{{- if eq .Values.dashboard.serviceType "LoadBalancer" }}
+   The dashboard is exposed via a LoadBalancer. Get its external IP:
+
+     kubectl get svc {{ include "csf.fullname" . }}-dashboard -n {{ .Release.Namespace }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+{{- else }}
+   The dashboard is internal (ClusterIP). Forward port to access locally:
+
+     kubectl port-forward svc/{{ include "csf.fullname" . }}-dashboard {{ .Values.dashboard.port }}:{{ .Values.dashboard.port }} -n {{ .Release.Namespace }}
+
+   Then open http://localhost:{{ .Values.dashboard.port }} in your browser.
+{{- end }}
+
+2. Access the API Server:
+
+     kubectl port-forward svc/{{ include "csf.fullname" . }}-api {{ .Values.api.port }}:{{ .Values.api.port }} -n {{ .Release.Namespace }}
+
+   API is available at http://localhost:{{ .Values.api.port }}
+
+3. Send OTLP data to the Collector:
+
+   gRPC:  {{ include "csf.fullname" . }}-collector:{{ .Values.collector.ports.otlpGrpc }}
+   HTTP:  {{ include "csf.fullname" . }}-collector:{{ .Values.collector.ports.otlpHttp }}
+
+4. Connect to PostgreSQL + AGE:
+
+     kubectl port-forward svc/{{ include "csf.fullname" . }}-postgresql {{ .Values.postgresql.port }}:{{ .Values.postgresql.port }} -n {{ .Release.Namespace }}
+
+     psql "postgres://{{ .Values.postgresql.credentials.username }}:{{ .Values.postgresql.credentials.password }}@localhost:{{ .Values.postgresql.port }}/{{ .Values.postgresql.credentials.database }}"

@@ -18,7 +18,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex">
-      <aside className="w-64 bg-gray-900 text-white p-4 flex flex-col">
+      <aside className="w-64 bg-gray-900 text-white p-4 flex flex-col sticky top-0 h-screen overflow-y-auto">
         <h1 className="text-xl font-bold mb-8">Cloud Security Fabric</h1>
         <nav className="space-y-2 flex-1">
           {navItems.map((item) => (

@@ -72,8 +72,6 @@ echo ""
 echo "[1/4] Starting PostgreSQL + Apache AGE..."
 docker compose up -d
 echo "  Waiting for database to be healthy..."
-wait_for_healthy "" "PostgreSQL" 0 || true  # health check is via docker, not HTTP
-# Wait for docker health check
 attempts=0
 while [ $attempts -lt 30 ]; do
   status=$(docker inspect --format='{{.State.Health.Status}}' csf-postgres 2>/dev/null || echo "starting")
@@ -91,13 +89,14 @@ echo ""
 
 # 2. Collector
 echo "[2/4] Building and starting collector..."
-make build
+mkdir -p build
+go build -o build/csf-collector ./cmd/collector/
 ./build/csf-collector --config collector-config.yaml > /tmp/csf-collector.log 2>&1 &
 COLLECTOR_PID=$!
 echo "$COLLECTOR_PID collector" > "$PIDFILE"
 echo "  Collector started (PID $COLLECTOR_PID, log: /tmp/csf-collector.log)"
-echo "  Waiting for OTLP endpoint..."
-wait_for_healthy "http://localhost:13133" "Collector"
+echo "  Waiting for collector to start..."
+wait_for_healthy "http://localhost:55679/debug/servicez" "Collector"
 echo "  Collector is ready."
 echo ""
 
@@ -125,7 +124,7 @@ fi
 echo ""
 echo "=== CSF is running ==="
 echo ""
-echo "  Collector OTLP:  http://localhost:4318"
+echo "  Collector OTLP:   http://localhost:4318"
 echo "  Collector zPages: http://localhost:55679"
 echo "  API server:       http://localhost:8080"
 echo "  API health:       http://localhost:8080/api/v1/health"

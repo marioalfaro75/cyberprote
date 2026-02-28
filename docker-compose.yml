@@ -1,6 +1,6 @@
 services:
   postgres-age:
-    image: apache/age:v1.5.0-pg16
+    image: apache/age:release_PG16_1.5.0
     container_name: csf-postgres
     environment:
       POSTGRES_USER: csf

@@ -97,13 +97,26 @@ func (gs *GraphService) queryCypher(ctx context.Context, query string, returnCol
 	return gs.db.QueryContext(ctx, stmt)
 }
 
-// propsJSON converts a map to an AGE-compatible JSON properties string.
+// propsJSON converts a map to an AGE-compatible Cypher map literal string.
+// AGE requires unquoted keys and single-quoted string values:
+//
+//	{uid: 'abc', severity_id: 3, is_public: true}
 func propsJSON(props map[string]interface{}) string {
-	data, err := json.Marshal(props)
-	if err != nil {
+	if len(props) == 0 {
 		return "{}"
 	}
-	return string(data)
+	parts := make([]string, 0, len(props))
+	for k, v := range props {
+		switch val := v.(type) {
+		case string:
+			parts = append(parts, fmt.Sprintf("%s: '%s'", k, escapeString(val)))
+		case bool:
+			parts = append(parts, fmt.Sprintf("%s: %t", k, val))
+		default:
+			parts = append(parts, fmt.Sprintf("%s: %v", k, val))
+		}
+	}
+	return "{" + strings.Join(parts, ", ") + "}"
 }
 
 // escapeString escapes single quotes for Cypher string literals.
